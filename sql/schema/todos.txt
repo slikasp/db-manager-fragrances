@@ -1,0 +1,2 @@
+- replace '-' with ' ' in names?
+- add card location column
