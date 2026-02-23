@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/slikasp/dbmanagerfrags/database"
+	"github.com/slikasp/dbmanfrags/database"
 )
 
 const configFileName = "config.json"
@@ -14,9 +14,9 @@ type Config struct {
 	RemoteDbURL string `json:"remote_db_url"`
 }
 
-type Database struct {
-	Queries *database.Queries
-	Cfg     *Config
+type State struct {
+	DB        *database.Queries
+	CurrentID int32
 }
 
 func getConfigFilePath() (string, error) {

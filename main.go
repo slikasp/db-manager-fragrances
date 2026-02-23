@@ -1,14 +1,12 @@
 package main
 
 import (
-	"context"
 	"database/sql"
-	"fmt"
 	"log"
 
 	_ "github.com/lib/pq"
-	"github.com/slikasp/dbmanagerfrags/config"
-	"github.com/slikasp/dbmanagerfrags/database"
+	"github.com/slikasp/dbmanfrags/config"
+	"github.com/slikasp/dbmanfrags/database"
 )
 
 func main() {
@@ -17,6 +15,8 @@ func main() {
 	// 	log.Fatalf("failed to setup logging: %v", err)
 	// }
 	// defer logFile.Close()
+
+	maxFragrances := int32(123330)
 
 	// Read config
 	cfg, err := config.Read()
@@ -29,14 +29,13 @@ func main() {
 	dbQueries := database.New(dbtx)
 
 	// Create database struct to be passed to functions
-	db := &config.Database{
-		Queries: dbQueries,
-		Cfg:     &cfg,
+	stt := &config.State{
+		DB:        dbQueries,
+		CurrentID: 1,
 	}
 
-	frag, err := db.Queries.GetFragrance(context.Background(), 1)
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println(frag)
+	// start from 0 to maxFragrances
+	//make function of the below
+	// try downloading one image
+	// update db
 }

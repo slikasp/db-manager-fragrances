@@ -8,6 +8,14 @@ import (
 	"database/sql"
 )
 
+type Card struct {
+	FragranticaID int32
+	Url           string
+	Image         sql.NullString
+	Found         bool
+	Downloaded    sql.NullTime
+}
+
 type Fragrance struct {
 	ID            int64
 	Url           sql.NullString
