@@ -2,12 +2,12 @@ package cards
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/slikasp/dbmanfrags/config"
 	"github.com/slikasp/dbmanfrags/database"
@@ -15,16 +15,16 @@ import (
 
 type Log struct {
 	Checked  int32
-	Found    []int32
-	NotFound []int32
+	Found    int32
+	NotFound int32
 }
 
 func (l *Log) card(id int32, found bool) {
 	l.Checked = id
 	if found {
-		l.Found = append(l.Found, id)
+		l.Found += 1
 	} else {
-		l.NotFound = append(l.NotFound, id)
+		l.NotFound += 1
 	}
 }
 
@@ -56,7 +56,7 @@ func downloadCard(cardID int32) (database.AddCardParams, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		err = errors.New("Unexpected response code")
+		err = fmt.Errorf("No card for ID %d", cardID)
 		fmt.Println(err)
 		return card, err
 	}
@@ -76,28 +76,63 @@ func downloadCard(cardID int32) (database.AddCardParams, error) {
 		return card, err
 	}
 
+	fmt.Printf("Card downloaded for ID %d\n", cardID)
+
 	return card, nil
 }
 
-func GetAllCards(state config.State) Log {
+// Only use this for a fresh database because it will redownload all exisiting cards too
+// Might be used to force update and find new cards that weren't there before
+func DownloadAllCards(state *config.State) Log {
 	log := Log{}
 
 	startCardID := state.CurrentID
 	endCardID := state.LastID
 
 	for cardID := startCardID; cardID <= endCardID; cardID++ {
+		// Keep track of card being worked on
+		state.CurrentID = cardID
+
+		// Try downloading the card (existing or not)
 		card, err := downloadCard(cardID)
-		log.card(cardID, card.HasCard)
+		log.card(card.FragranticaID, card.HasCard)
 		// If card was found, but error still returned stop execution
 		if err != nil && card.HasCard {
+			fmt.Println(err)
 			return log
 		}
-		log.card(cardID, true)
-		// Add card details to the database
-		state.DB.AddCard(context.Background(), card)
 
-		// Don't want to overwhelm services
-		time.Sleep(1 * time.Second)
+		// Check if card already exists
+		_, err = state.DB.GetCard(context.Background(), cardID)
+		if err != nil {
+			// ID doesn't exist
+			if errors.Is(err, sql.ErrNoRows) {
+				// Try adding new card to the database
+				_, err = state.DB.AddCard(context.Background(), card)
+				if err != nil {
+					fmt.Println(err)
+					return log
+				}
+			} else {
+				// Real error
+				fmt.Println(err)
+				return log
+			}
+		}
+
+		// Card exists, update instead
+		_, err = state.DB.UpdateCard(context.Background(), database.UpdateCardParams{
+			FragranticaID: card.FragranticaID,
+			Image:         card.Image,
+			HasCard:       card.HasCard,
+		})
+		if err != nil {
+			fmt.Println(err)
+			return log
+		}
+
+		// If you don't want to overwhelm services
+		// time.Sleep(100 * time.Millisecond)
 	}
 
 	return log

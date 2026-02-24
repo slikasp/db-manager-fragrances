@@ -10,13 +10,13 @@ func TestLog(t *testing.T) {
 
 	log.card(1, true)
 
-	if len(log.Found) != 1 {
+	if log.Found != 1 {
 		t.Error("'Found' not logged")
 	}
 
 	log.card(2, false)
 
-	if len(log.NotFound) != 1 {
+	if log.NotFound != 1 {
 		t.Error("'NotFound' not logged")
 	}
 

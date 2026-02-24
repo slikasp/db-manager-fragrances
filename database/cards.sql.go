@@ -46,6 +46,25 @@ func (q *Queries) AddCard(ctx context.Context, arg AddCardParams) (Card, error) 
 	return i, err
 }
 
+const getCard = `-- name: GetCard :one
+SELECT fragrantica_id, url, image, has_card, updated
+FROM cards
+WHERE fragrantica_id = $1
+`
+
+func (q *Queries) GetCard(ctx context.Context, fragranticaID int32) (Card, error) {
+	row := q.db.QueryRowContext(ctx, getCard, fragranticaID)
+	var i Card
+	err := row.Scan(
+		&i.FragranticaID,
+		&i.Url,
+		&i.Image,
+		&i.HasCard,
+		&i.Updated,
+	)
+	return i, err
+}
+
 const refreshCard = `-- name: RefreshCard :exec
 UPDATE cards 
 SET downloaded = NOW()

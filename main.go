@@ -12,14 +12,8 @@ import (
 )
 
 func main() {
-	logFile, err := setupLogging("app.log")
-	if err != nil {
-		log.Fatalf("failed to setup logging: %v", err)
-	}
-	defer logFile.Close()
-
 	// TODO get this from fragrantica main page
-	maxFragrances := int32(123330)
+	maxFragrances := int32(124000)
 
 	// Read config
 	cfg, err := config.Read()
@@ -38,13 +32,14 @@ func main() {
 		LastID:    maxFragrances,
 	}
 
-	l := cards.GetAllCards(*stt)
+	l := cards.DownloadAllCards(stt)
 
 	fmt.Println(l)
 
 	cfg.CurrentID = stt.CurrentID
 	err = config.Write(cfg)
 	if err != nil {
+		fmt.Println(err)
 		log.Fatalf("error writing config: %v", err)
 	}
 }
