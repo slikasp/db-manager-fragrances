@@ -12,11 +12,13 @@ const configFileName = "config.json"
 
 type Config struct {
 	RemoteDbURL string `json:"remote_db_url"`
+	CurrentID   int32  `json:"current_id"`
 }
 
 type State struct {
 	DB        *database.Queries
 	CurrentID int32
+	LastID    int32
 }
 
 func getConfigFilePath() (string, error) {
@@ -50,4 +52,21 @@ func Read() (Config, error) {
 	}
 
 	return cfg, nil
+}
+
+func Write(cfg Config) error {
+	path, err := getConfigFilePath()
+	if err != nil {
+		return err
+	}
+
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	encoder := json.NewEncoder(file)
+	encoder.SetIndent("", "    ")
+	return encoder.Encode(cfg)
 }

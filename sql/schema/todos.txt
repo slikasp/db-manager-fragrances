@@ -1,2 +1,2 @@
 - replace '-' with ' ' in names?
-- add card location column
+- add card location column when I figure out storage

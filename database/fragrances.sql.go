@@ -10,7 +10,7 @@ import (
 )
 
 const getFragrance = `-- name: GetFragrance :one
-SELECT id, url, name, brand, country, gender, rating_value, rating_count, year, top_notes, middle_notes, base_notes, perfumer1, perfumer2, accord1, accord2, accord3, accord4, accord5, fragrantica_id 
+SELECT id, url, name, brand, country, gender, rating_value, rating_count, year, top_notes, middle_notes, base_notes, perfumer1, perfumer2, accord1, accord2, accord3, accord4, accord5, fragrantica_id, updated 
 FROM fragrances 
 WHERE fragrantica_id = $1
 `
@@ -39,6 +39,7 @@ func (q *Queries) GetFragrance(ctx context.Context, fragranticaID int32) (Fragra
 		&i.Accord4,
 		&i.Accord5,
 		&i.FragranticaID,
+		&i.Updated,
 	)
 	return i, err
 }

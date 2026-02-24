@@ -2,20 +2,23 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 
 	_ "github.com/lib/pq"
+	"github.com/slikasp/dbmanfrags/cards"
 	"github.com/slikasp/dbmanfrags/config"
 	"github.com/slikasp/dbmanfrags/database"
 )
 
 func main() {
-	// logFile, err := setupLogging("app.log")
-	// if err != nil {
-	// 	log.Fatalf("failed to setup logging: %v", err)
-	// }
-	// defer logFile.Close()
+	logFile, err := setupLogging("app.log")
+	if err != nil {
+		log.Fatalf("failed to setup logging: %v", err)
+	}
+	defer logFile.Close()
 
+	// TODO get this from fragrantica main page
 	maxFragrances := int32(123330)
 
 	// Read config
@@ -31,11 +34,17 @@ func main() {
 	// Create database struct to be passed to functions
 	stt := &config.State{
 		DB:        dbQueries,
-		CurrentID: 1,
+		CurrentID: cfg.CurrentID,
+		LastID:    maxFragrances,
 	}
 
-	// start from 0 to maxFragrances
-	//make function of the below
-	// try downloading one image
-	// update db
+	l := cards.GetAllCards(*stt)
+
+	fmt.Println(l)
+
+	cfg.CurrentID = stt.CurrentID
+	err = config.Write(cfg)
+	if err != nil {
+		log.Fatalf("error writing config: %v", err)
+	}
 }

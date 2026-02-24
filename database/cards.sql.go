@@ -7,27 +7,25 @@ package database
 
 import (
 	"context"
-	"database/sql"
 )
 
 const addCard = `-- name: AddCard :one
-INSERT INTO cards (fragrantica_id, url, image, found, downloaded)
+INSERT INTO cards (fragrantica_id, url, image, has_card, updated)
 VALUES (
     $1,
     $2,
     $3,
     $4,
-    $5
+    NOW()
 )
-RETURNING fragrantica_id, url, image, found, downloaded
+RETURNING fragrantica_id, url, image, has_card, updated
 `
 
 type AddCardParams struct {
 	FragranticaID int32
 	Url           string
-	Image         sql.NullString
-	Found         bool
-	Downloaded    sql.NullTime
+	Image         string
+	HasCard       bool
 }
 
 func (q *Queries) AddCard(ctx context.Context, arg AddCardParams) (Card, error) {
@@ -35,48 +33,52 @@ func (q *Queries) AddCard(ctx context.Context, arg AddCardParams) (Card, error) 
 		arg.FragranticaID,
 		arg.Url,
 		arg.Image,
-		arg.Found,
-		arg.Downloaded,
+		arg.HasCard,
 	)
 	var i Card
 	err := row.Scan(
 		&i.FragranticaID,
 		&i.Url,
 		&i.Image,
-		&i.Found,
-		&i.Downloaded,
+		&i.HasCard,
+		&i.Updated,
 	)
 	return i, err
 }
 
+const refreshCard = `-- name: RefreshCard :exec
+UPDATE cards 
+SET downloaded = NOW()
+WHERE fragrantica_id = $1
+`
+
+func (q *Queries) RefreshCard(ctx context.Context, fragranticaID int32) error {
+	_, err := q.db.ExecContext(ctx, refreshCard, fragranticaID)
+	return err
+}
+
 const updateCard = `-- name: UpdateCard :one
 UPDATE cards 
-SET image = $2, found = $3, downloaded = $4
+SET image = $2, has_card = $3, updated = NOW()
 WHERE fragrantica_id = $1
-RETURNING fragrantica_id, url, image, found, downloaded
+RETURNING fragrantica_id, url, image, has_card, updated
 `
 
 type UpdateCardParams struct {
 	FragranticaID int32
-	Image         sql.NullString
-	Found         bool
-	Downloaded    sql.NullTime
+	Image         string
+	HasCard       bool
 }
 
 func (q *Queries) UpdateCard(ctx context.Context, arg UpdateCardParams) (Card, error) {
-	row := q.db.QueryRowContext(ctx, updateCard,
-		arg.FragranticaID,
-		arg.Image,
-		arg.Found,
-		arg.Downloaded,
-	)
+	row := q.db.QueryRowContext(ctx, updateCard, arg.FragranticaID, arg.Image, arg.HasCard)
 	var i Card
 	err := row.Scan(
 		&i.FragranticaID,
 		&i.Url,
 		&i.Image,
-		&i.Found,
-		&i.Downloaded,
+		&i.HasCard,
+		&i.Updated,
 	)
 	return i, err
 }

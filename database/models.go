@@ -6,14 +6,15 @@ package database
 
 import (
 	"database/sql"
+	"time"
 )
 
 type Card struct {
 	FragranticaID int32
 	Url           string
-	Image         sql.NullString
-	Found         bool
-	Downloaded    sql.NullTime
+	Image         string
+	HasCard       bool
+	Updated       time.Time
 }
 
 type Fragrance struct {
@@ -37,4 +38,5 @@ type Fragrance struct {
 	Accord4       sql.NullString
 	Accord5       sql.NullString
 	FragranticaID int32
+	Updated       time.Time
 }

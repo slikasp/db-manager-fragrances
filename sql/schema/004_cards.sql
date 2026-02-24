@@ -1,10 +1,10 @@
 -- +goose Up
 CREATE TABLE cards (
-  fragrantica_id INTEGER PRIMARY KEY,
+  fragrantica_id INTEGER PRIMARY KEY REFERENCES fragrances(fragrantica_id),
   url TEXT NOT NULL,
-  image TEXT,
-  found BOOLEAN NOT NULL DEFAULT 'f',
-  downloaded TIMESTAMP
+  image TEXT NOT NULL,
+  has_card BOOLEAN NOT NULL DEFAULT 'f',
+  updated TIMESTAMP NOT NULL
 );
 
 -- +goose Down
