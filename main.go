@@ -32,10 +32,13 @@ func main() {
 		LastID:    maxFragrances,
 	}
 
-	l := cards.DownloadAllCards(stt)
+	// Runs some kind of function with a loop
+	// TODO: need single maintenance function when fragrances DB is up to date
+	err = cards.DownloadAllCards(stt)
 
-	fmt.Println(l)
+	fmt.Println(err)
 
+	// doesn't work if you CTRL+C out of the loop, manually update config.json in that case
 	cfg.CurrentID = stt.CurrentID
 	err = config.Write(cfg)
 	if err != nil {

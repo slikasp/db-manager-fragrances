@@ -5,28 +5,6 @@ import (
 	"testing"
 )
 
-func TestLog(t *testing.T) {
-	log := Log{}
-
-	log.card(1, true)
-
-	if log.Found != 1 {
-		t.Error("'Found' not logged")
-	}
-
-	log.card(2, false)
-
-	if log.NotFound != 1 {
-		t.Error("'NotFound' not logged")
-	}
-
-	log.card(3, true)
-
-	if log.Checked != 3 {
-		t.Error("'Checked' wrong number")
-	}
-}
-
 func TestMakers(t *testing.T) {
 	expectedUrl := "https://fimgs.net/mdimg/perfume-social-cards/en-p_c_1.jpeg"
 	url := makeCardURL(1)

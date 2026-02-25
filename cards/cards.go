@@ -13,21 +13,6 @@ import (
 	"github.com/slikasp/dbmanfrags/database"
 )
 
-type Log struct {
-	Checked  int32
-	Found    int32
-	NotFound int32
-}
-
-func (l *Log) card(id int32, found bool) {
-	l.Checked = id
-	if found {
-		l.Found += 1
-	} else {
-		l.NotFound += 1
-	}
-}
-
 func makeCardURL(cardID int32) string {
 	url := fmt.Sprintf("https://fimgs.net/mdimg/perfume-social-cards/en-p_c_%d.jpeg", cardID)
 	return url
@@ -81,42 +66,39 @@ func downloadCard(cardID int32) (database.AddCardParams, error) {
 	return card, nil
 }
 
-// Only use this for a fresh database because it will redownload all exisiting cards too
-// Might be used to force update and find new cards that weren't there before
-func DownloadAllCards(state *config.State) Log {
-	log := Log{}
-
+// Only use this for a fresh database because it will redownload all exisiting cards too.
+// Might be used to force update and find new cards that weren't there before.
+// Populates DB even with non existing fragrances.
+//
+// TODO: try to make this faster
+func DownloadAllCards(state *config.State) error {
 	startCardID := state.CurrentID
 	endCardID := state.LastID
 
-	for cardID := startCardID; cardID <= endCardID; cardID++ {
+	for id := startCardID; id <= endCardID; id++ {
 		// Keep track of card being worked on
-		state.CurrentID = cardID
+		state.CurrentID = id
 
 		// Try downloading the card (existing or not)
-		card, err := downloadCard(cardID)
-		log.card(card.FragranticaID, card.HasCard)
+		card, err := downloadCard(id)
 		// If card was found, but error still returned stop execution
 		if err != nil && card.HasCard {
-			fmt.Println(err)
-			return log
+			return err
 		}
 
 		// Check if card already exists
-		_, err = state.DB.GetCard(context.Background(), cardID)
+		_, err = state.DB.GetCard(context.Background(), id)
 		if err != nil {
 			// ID doesn't exist
 			if errors.Is(err, sql.ErrNoRows) {
-				// Try adding new card to the database
+				// Add new card to the database
 				_, err = state.DB.AddCard(context.Background(), card)
 				if err != nil {
-					fmt.Println(err)
-					return log
+					return err
 				}
 			} else {
 				// Real error
-				fmt.Println(err)
-				return log
+				return err
 			}
 		}
 
@@ -127,13 +109,39 @@ func DownloadAllCards(state *config.State) Log {
 			HasCard:       card.HasCard,
 		})
 		if err != nil {
-			fmt.Println(err)
-			return log
+			return err
 		}
-
-		// If you don't want to overwhelm services
-		// time.Sleep(100 * time.Millisecond)
 	}
 
-	return log
+	return nil
+}
+
+// Goes through all cards marked with HasCard == false and retries them
+func CheckMissingCards(state *config.State) error {
+	cardIDs, err := state.DB.GetMissingCardIDs(context.Background())
+	if err != nil {
+		return err
+	}
+
+	for _, id := range cardIDs {
+		card, err := downloadCard(id)
+		if card.HasCard {
+			// Card found, but not downloaded -> return
+			if err != nil {
+				return err
+				// Card found -> update DB
+			} else {
+				_, err = state.DB.UpdateCard(context.Background(), database.UpdateCardParams{
+					FragranticaID: card.FragranticaID,
+					Image:         card.Image,
+					HasCard:       card.HasCard,
+				})
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
 }

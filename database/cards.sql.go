@@ -65,6 +65,35 @@ func (q *Queries) GetCard(ctx context.Context, fragranticaID int32) (Card, error
 	return i, err
 }
 
+const getMissingCardIDs = `-- name: GetMissingCardIDs :many
+SELECT fragrantica_id
+FROM cards
+WHERE has_card = 'f'
+`
+
+func (q *Queries) GetMissingCardIDs(ctx context.Context) ([]int32, error) {
+	rows, err := q.db.QueryContext(ctx, getMissingCardIDs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var fragrantica_id int32
+		if err := rows.Scan(&fragrantica_id); err != nil {
+			return nil, err
+		}
+		items = append(items, fragrantica_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const refreshCard = `-- name: RefreshCard :exec
 UPDATE cards 
 SET downloaded = NOW()

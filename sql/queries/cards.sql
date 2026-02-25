@@ -14,6 +14,11 @@ SELECT *
 FROM cards
 WHERE fragrantica_id = $1;
 
+-- name: GetMissingCardIDs :many
+SELECT fragrantica_id
+FROM cards
+WHERE has_card = 'f';
+
 -- name: UpdateCard :one
 UPDATE cards 
 SET image = $2, has_card = $3, updated = NOW()
