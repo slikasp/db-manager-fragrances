@@ -1,2 +1,4 @@
-- replace '-' with ' ' in names?
+- replace '-' with ' ' in names? better do this when displaying
 - add card location column when I figure out storage
+- remove image link from cards with no image
+- add image link to fragrances then remove from cards

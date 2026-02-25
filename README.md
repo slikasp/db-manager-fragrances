@@ -4,9 +4,12 @@ Database manager for a global list of fragrances, used in my FragranceTrackGo pr
 
 The database itself is hosted on Supabase.
 
-Used a fragrantica.com dataset from 2025 to start, found here: https://www.kaggle.com/datasets/olgagmiufana1/fragrantica-com-fragrance-dataset
+Used a fragrantica.com dataset from 2025 to start (24k records), found here: https://www.kaggle.com/datasets/olgagmiufana1/fragrantica-com-fragrance-dataset
 
+Made some modifications for ease of use and developing this manager to update the database, expecting to get it up to ~100k records
 
-Made some modifications for ease of use.
-
-Still need to figure out a way to maintain this database so it's up to date.
+<ol> Current plan to get the required details:
+<li> Download all available cards (their links are the same except for ID)
+<li> Scan the QRs in the cards to get the links to fragrances
+<li> Parse HTML of the fragrance links for the rest of the details
+</ol>

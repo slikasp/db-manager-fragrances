@@ -145,3 +145,9 @@ func CheckMissingCards(state *config.State) error {
 
 	return nil
 }
+
+// TODOS
+
+// func - crop out the QR code
+
+// func - resolve QR code into a link
