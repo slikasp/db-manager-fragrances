@@ -151,3 +151,5 @@ func CheckMissingCards(state *config.State) error {
 // func - crop out the QR code
 
 // func - resolve QR code into a link
+
+// func - look for new cards: get max number with card, check for next ~100 cards, if found, update the max number
