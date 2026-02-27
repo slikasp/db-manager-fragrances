@@ -4,7 +4,6 @@ import (
 	"errors"
 	"image"
 	"image/jpeg"
-	"image/png"
 	"os"
 
 	"github.com/liyue201/goqr"
@@ -23,16 +22,7 @@ func saveQR(cropped image.Image) error {
 	return nil
 }
 
-func savePNG(img image.Image) error {
-	f, err := os.Create("cards/qr/temp.jpeg")
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	return png.Encode(f, img)
-}
-
-func resolveQr(filePath string) ([]string, error) {
+func decodeImage(filePath string) (image.Image, error) {
 	f, err := os.Open(filePath)
 	if err != nil {
 		return nil, err
@@ -44,6 +34,15 @@ func resolveQr(filePath string) ([]string, error) {
 		return nil, err
 	}
 
+	return img, nil
+}
+
+func cropQR(filePath string) (image.Image, error) {
+	img, err := decodeImage(filePath)
+	if err != nil {
+		return nil, err
+	}
+
 	// Crop rectangle in *image coordinates* (x0,y0) -> (x1,y1)
 	rect := image.Rect(1045, 10, 1135, 100) // left, top, right, bottom
 
@@ -51,19 +50,21 @@ func resolveQr(filePath string) ([]string, error) {
 		SubImage(r image.Rectangle) image.Image
 	})
 	if !ok {
-		return nil, errors.New("image type does not support cropping")
+		return nil, errors.New("Image type does not support cropping")
 	}
 
 	cropped := sub.SubImage(rect)
 
-	// --- SAVE TEMP FILE ---
 	err = saveQR(cropped)
 	if err != nil {
 		return nil, err
 	}
-	// -----------------------
 
-	qrs, err := goqr.Recognize(cropped)
+	return cropped, nil
+}
+
+func decodeQR(qr image.Image) ([]string, error) {
+	qrs, err := goqr.Recognize(qr)
 	if err != nil {
 		return nil, err
 	}
