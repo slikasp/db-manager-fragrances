@@ -7,10 +7,13 @@ import (
 	"os"
 
 	"github.com/liyue201/goqr"
+
+	"github.com/makiuchi-d/gozxing"
+	"github.com/makiuchi-d/gozxing/qrcode"
 )
 
-func saveQR(cropped image.Image) error {
-	out, err := os.Create("cards/qr/temp.jpeg")
+func saveImage(cropped image.Image, path string) error {
+	out, err := os.Create(path)
 	if err != nil {
 		return err
 	}
@@ -55,7 +58,7 @@ func cropQR(filePath string) (image.Image, error) {
 
 	cropped := sub.SubImage(rect)
 
-	err = saveQR(cropped)
+	err = saveImage(cropped, "cards/qr/temp.jpeg")
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +66,7 @@ func cropQR(filePath string) (image.Image, error) {
 	return cropped, nil
 }
 
-func decodeQR(qr image.Image) ([]string, error) {
+func decodeGoqr(qr image.Image) ([]string, error) {
 	qrs, err := goqr.Recognize(qr)
 	if err != nil {
 		return nil, err
@@ -75,4 +78,24 @@ func decodeQR(qr image.Image) ([]string, error) {
 	}
 
 	return results, nil
+}
+
+func decodeGozxing(img image.Image) (string, error) {
+	bmp, err := gozxing.NewBinaryBitmapFromImage(img)
+	if err != nil {
+		return "", err
+	}
+
+	reader := qrcode.NewQRCodeReader()
+
+	hints := map[gozxing.DecodeHintType]interface{}{
+		gozxing.DecodeHintType_TRY_HARDER: true,
+	}
+
+	result, err := reader.Decode(bmp, hints)
+	if err != nil {
+		return "", err
+	}
+
+	return result.GetText(), nil
 }
