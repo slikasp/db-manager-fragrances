@@ -1,8 +1,8 @@
 package main
 
 import (
+	"context"
 	"database/sql"
-	"fmt"
 	"log"
 
 	_ "github.com/lib/pq"
@@ -11,38 +11,42 @@ import (
 	"github.com/slikasp/dbmanfrags/database"
 )
 
-func main() {
-	// TODO get this from fragrantica main page
-	maxFragrances := int32(124000)
-
+func setup() (*config.State, error) {
 	// Read config
 	cfg, err := config.Read()
 	if err != nil {
-		log.Fatalf("error reading config: %v", err)
+		return nil, err
 	}
 
 	// Load the database
 	dbtx, err := sql.Open("postgres", cfg.RemoteDbURL)
+	if err != nil {
+		return nil, err
+	}
 	dbQueries := database.New(dbtx)
 
 	// Create database struct to be passed to functions
-	stt := &config.State{
-		DB:        dbQueries,
-		CurrentID: cfg.CurrentID,
-		LastID:    maxFragrances,
+	state := &config.State{
+		DB: dbQueries,
 	}
 
-	// Runs some kind of function with a loop
-	// TODO: need single maintenance function when fragrances DB is up to date
-	err = cards.DownloadAllCards(stt)
-
-	fmt.Println(err)
-
-	// doesn't work if you CTRL+C out of the loop, manually update config.json in that case
-	cfg.CurrentID = stt.CurrentID
-	err = config.Write(cfg)
+	// Set ID of last card from the database
+	state.LastID, err = state.DB.GetLastCardID(context.Background())
 	if err != nil {
-		fmt.Println(err)
-		log.Fatalf("error writing config: %v", err)
+		return nil, err
+	}
+
+	return state, nil
+}
+
+func main() {
+	stt, err := setup()
+	if err != nil {
+		log.Fatalf("Error reading config: %v", err)
+	}
+
+	err = cards.CheckAllLinks(stt)
+	if err != nil {
+		log.Fatalf("Failed running commands: %v", err)
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 
@@ -72,13 +73,10 @@ func downloadCard(cardID int32) (database.AddCardParams, error) {
 //
 // TODO: try to make this faster
 func DownloadAllCards(state *config.State) error {
-	startCardID := state.CurrentID
+	startCardID := int32(1)
 	endCardID := state.LastID
 
 	for id := startCardID; id <= endCardID; id++ {
-		// Keep track of card being worked on
-		state.CurrentID = id
-
 		// Try downloading the card (existing or not)
 		card, err := downloadCard(id)
 		// If card was found, but error still returned stop execution
@@ -96,20 +94,21 @@ func DownloadAllCards(state *config.State) error {
 				if err != nil {
 					return err
 				}
+				log.Printf("New card added, ID:%d, URL:%s", id, card.Image)
 			} else {
 				// Real error
 				return err
 			}
-		}
-
-		// Card exists, update instead
-		_, err = state.DB.UpdateCard(context.Background(), database.UpdateCardParams{
-			FragranticaID: card.FragranticaID,
-			Image:         card.Image,
-			HasCard:       card.HasCard,
-		})
-		if err != nil {
-			return err
+		} else {
+			// Update card if exists
+			_, err = state.DB.UpdateCard(context.Background(), database.UpdateCardParams{
+				FragranticaID: card.FragranticaID,
+				Image:         card.Image,
+				HasCard:       card.HasCard,
+			})
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -126,20 +125,69 @@ func CheckMissingCards(state *config.State) error {
 	for _, id := range cardIDs {
 		card, err := downloadCard(id)
 		if card.HasCard {
-			// Card found, but not downloaded -> return
+			// Card found, but not downloaded -> return download error
 			if err != nil {
 				return err
-				// Card found -> update DB
 			} else {
+				// Card found -> update DB
 				_, err = state.DB.UpdateCard(context.Background(), database.UpdateCardParams{
 					FragranticaID: card.FragranticaID,
 					Image:         card.Image,
 					HasCard:       card.HasCard,
 				})
+				log.Printf("New card added, ID:%d, URL:%s", id, card.Image)
 				if err != nil {
 					return err
 				}
 			}
+		}
+		// Proceed to next id if no card found
+	}
+
+	return nil
+}
+
+// Only use this on a fresh database.
+// Not useful otherwise, will only check existing links
+func CheckAllLinks(state *config.State) error {
+	ids, err := state.DB.GetExistingCardIDs(context.Background())
+	if err != nil {
+		return fmt.Errorf("Failed getting IDs from database: %s", err)
+	}
+
+	for _, id := range ids {
+		fmt.Printf("Working on ID %d: ", id)
+		card, err := state.DB.GetCard(context.Background(), id)
+		if err != nil {
+			return fmt.Errorf("Could not get card by ID from database: %s", err)
+		}
+
+		urlCard, err := getLinkFromCard(card.Image)
+		if err != nil {
+			return fmt.Errorf("Failed parsing QR from image: %s", err)
+		}
+
+		urlFrag, err := state.DB.GetFragranceLink(context.Background(), id)
+		if err != nil {
+			// No fragrance with this ID -> add new
+			if errors.Is(err, sql.ErrNoRows) {
+				state.DB.AddFragranceLink(context.Background(), database.AddFragranceLinkParams{
+					FragranticaID: id,
+					Url: sql.NullString{
+						String: urlCard,
+						Valid:  true,
+					},
+				})
+				log.Printf("Added new fragrance, ID:%d, URL:%s", id, urlCard)
+			}
+			// Real error
+			return fmt.Errorf("Could not get fragrance link from database: %s", err)
+		} else {
+			// Compare links if fragrance is already in database
+			if urlCard != urlFrag.String {
+				return fmt.Errorf("URL mismatch (card:frag): %s:%s", urlCard, urlFrag.String)
+			}
+			log.Printf("Decoded link matches existing fragrance, ID:%d", id)
 		}
 	}
 
@@ -147,9 +195,5 @@ func CheckMissingCards(state *config.State) error {
 }
 
 // TODOS
-
-// func - crop out the QR code
-
-// func - resolve QR code into a link
 
 // func - look for new cards: get max number with card, check for next ~100 cards, if found, update the max number

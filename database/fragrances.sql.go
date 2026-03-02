@@ -7,7 +7,27 @@ package database
 
 import (
 	"context"
+	"database/sql"
 )
+
+const addFragranceLink = `-- name: AddFragranceLink :exec
+INSERT INTO fragrances (fragrantica_id, url, updated)
+VALUES (
+    $1,
+    $2,
+    NOW()
+)
+`
+
+type AddFragranceLinkParams struct {
+	FragranticaID int32
+	Url           sql.NullString
+}
+
+func (q *Queries) AddFragranceLink(ctx context.Context, arg AddFragranceLinkParams) error {
+	_, err := q.db.ExecContext(ctx, addFragranceLink, arg.FragranticaID, arg.Url)
+	return err
+}
 
 const getFragrance = `-- name: GetFragrance :one
 SELECT id, url, name, brand, country, gender, rating_value, rating_count, year, top_notes, middle_notes, base_notes, perfumer1, perfumer2, accord1, accord2, accord3, accord4, accord5, fragrantica_id, updated 
@@ -42,4 +62,17 @@ func (q *Queries) GetFragrance(ctx context.Context, fragranticaID int32) (Fragra
 		&i.Updated,
 	)
 	return i, err
+}
+
+const getFragranceLink = `-- name: GetFragranceLink :one
+SELECT url
+FROM fragrances
+WHERE fragrantica_id = $1
+`
+
+func (q *Queries) GetFragranceLink(ctx context.Context, fragranticaID int32) (sql.NullString, error) {
+	row := q.db.QueryRowContext(ctx, getFragranceLink, fragranticaID)
+	var url sql.NullString
+	err := row.Scan(&url)
+	return url, err
 }

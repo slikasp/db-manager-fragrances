@@ -1,11 +1,12 @@
 package cards
 
 import (
-	"errors"
+	"fmt"
 	"image"
 	"image/jpeg"
 	"net/url"
 	"os"
+	"strings"
 
 	"github.com/liyue201/goqr"
 
@@ -47,7 +48,7 @@ func decodeImage(filePath string) (image.Image, error) {
 func cropQR(filePath string) (image.Image, error) {
 	img, err := decodeImage(filePath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Could not decode image %s: %s", filePath, err)
 	}
 
 	// Crop rectangle in *image coordinates* (x0,y0) -> (x1,y1)
@@ -57,7 +58,7 @@ func cropQR(filePath string) (image.Image, error) {
 		SubImage(r image.Rectangle) image.Image
 	})
 	if !ok {
-		return nil, errors.New("Image type does not support cropping")
+		return nil, fmt.Errorf("Image type does not support cropping: %s", filePath)
 	}
 
 	cropped := sub.SubImage(rect)
@@ -133,7 +134,7 @@ func decodeGoqr(qr image.Image) ([]string, error) {
 func decodeGozxing(img image.Image) (string, error) {
 	bmp, err := gozxing.NewBinaryBitmapFromImage(img)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("Failed converting to bitmap: %s", err)
 	}
 
 	reader := qrcode.NewQRCodeReader()
@@ -144,7 +145,7 @@ func decodeGozxing(img image.Image) (string, error) {
 
 	result, err := reader.Decode(bmp, hints)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("Failed decoding bitmap: %s", err)
 	}
 
 	return result.GetText(), nil
@@ -167,4 +168,39 @@ func stripQuery(raw string) (string, error) {
 	u.Fragment = ""
 
 	return u.String(), nil
+}
+
+// Gets the link to the fragrance from it's card image
+func getLinkFromCard(cardPath string) (string, error) {
+	// Crop QR from card image
+	img, err := cropQR(cardPath)
+	if err != nil {
+		return "", fmt.Errorf("Failed to crop image %s: %s", cardPath, err)
+	}
+
+	// ONLY FOR TESTING
+	saveImage(img, "cards/cards/qr/temp_crop.jpeg")
+
+	// strip duplicate rows/columns from QR image
+	fixed := fixQR(img)
+
+	// ONLY FOR TESTING
+	saveImage(fixed, "cards/cards/qr/temp_fixed.jpeg")
+
+	// decode QR code
+	link, err := decodeGozxing(fixed)
+	if err != nil {
+		return "", fmt.Errorf("Failed decoding the QR code: %s", err)
+	}
+
+	// strip query parameters from link
+	stripped, err := stripQuery(link)
+	if err != nil {
+		return "", fmt.Errorf("Failed stripping query parameters from URL: %s", err)
+	}
+
+	// normalize string
+	lower := strings.ToLower(stripped)
+
+	return lower, nil
 }

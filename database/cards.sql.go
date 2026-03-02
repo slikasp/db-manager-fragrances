@@ -65,6 +65,50 @@ func (q *Queries) GetCard(ctx context.Context, fragranticaID int32) (Card, error
 	return i, err
 }
 
+const getExistingCardIDs = `-- name: GetExistingCardIDs :many
+SELECT fragrantica_id
+FROM cards
+WHERE has_card = 't'
+`
+
+func (q *Queries) GetExistingCardIDs(ctx context.Context) ([]int32, error) {
+	rows, err := q.db.QueryContext(ctx, getExistingCardIDs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var fragrantica_id int32
+		if err := rows.Scan(&fragrantica_id); err != nil {
+			return nil, err
+		}
+		items = append(items, fragrantica_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getLastCardID = `-- name: GetLastCardID :one
+SELECT fragrantica_id
+FROM cards
+WHERE has_card = 't'
+ORDER BY fragrantica_id DESC
+LIMIT 1
+`
+
+func (q *Queries) GetLastCardID(ctx context.Context) (int32, error) {
+	row := q.db.QueryRowContext(ctx, getLastCardID)
+	var fragrantica_id int32
+	err := row.Scan(&fragrantica_id)
+	return fragrantica_id, err
+}
+
 const getMissingCardIDs = `-- name: GetMissingCardIDs :many
 SELECT fragrantica_id
 FROM cards

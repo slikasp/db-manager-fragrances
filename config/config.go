@@ -16,9 +16,8 @@ type Config struct {
 }
 
 type State struct {
-	DB        *database.Queries
-	CurrentID int32
-	LastID    int32
+	DB     *database.Queries
+	LastID int32
 }
 
 func getConfigFilePath() (string, error) {
