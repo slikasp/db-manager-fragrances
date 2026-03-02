@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestResolveQR(t *testing.T) {
+func TestCropFix(t *testing.T) {
 	path := "cards/en/p_c_1.jpeg"
 
 	img, err := cropQR(path)
@@ -12,45 +12,44 @@ func TestResolveQR(t *testing.T) {
 		t.Errorf("QR resolution failed: %v", err)
 	}
 
-	link, err := decodeGozxing(img)
-	if err != nil {
-		t.Errorf("Could not decode: %v", err)
-	}
-
-	// if len(link) == 0 {
-	// 	t.Error(link)
-	// }
-
-	if link != "" {
-		t.Error(link)
-	}
-}
-
-func TestResolveUpscaledQR(t *testing.T) {
-	path := "cards/qr/temp.jpeg"
-
-	img, err := decodeImage(path)
-	if err != nil {
-		t.Errorf("Failed to decode: %v", err)
-	}
-
-	pre := preprocessForQR(img)
-
-	err = saveImage(pre, "cards/qr/tempHQ.jpeg")
+	err = saveImage(img, "cards/qr/test_crop.jpeg")
 	if err != nil {
 		t.Errorf("Failed to save: %v", err)
 	}
 
-	link, err := decodeGozxing(pre)
+	fixed := fixQR(img)
+
+	err = saveImage(fixed, "cards/qr/test_fix.jpeg")
+	if err != nil {
+		t.Errorf("Failed to save: %v", err)
+	}
+
+	// preprocess?
+}
+
+func TestResolveQR(t *testing.T) {
+	path := "cards/en/p_c_1.jpeg"
+
+	img, err := cropQR(path)
+	if err != nil {
+		t.Errorf("Could not crop: %v", err)
+	}
+
+	fixed := fixQR(img)
+
+	link, err := decodeGozxing(fixed)
 	if err != nil {
 		t.Errorf("Could not decode: %v", err)
 	}
 
-	// if len(link) == 0 {
-	// 	t.Error(link)
-	// }
-
-	if link != "" {
-		t.Error(link)
+	stripped, err := stripQuery(link)
+	if err != nil {
+		t.Errorf("Could not strip URL: %v", err)
 	}
+
+	expected := "https://www.fragrantica.com/perfume/Azzaro/Orange-Tonic-1.html"
+	if stripped != expected {
+		t.Errorf("Unexpected result: %s:%s", stripped, expected)
+	}
+
 }

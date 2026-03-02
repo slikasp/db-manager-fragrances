@@ -4,6 +4,7 @@ import (
 	"errors"
 	"image"
 	"image/jpeg"
+	"net/url"
 	"os"
 
 	"github.com/liyue201/goqr"
@@ -40,6 +41,9 @@ func decodeImage(filePath string) (image.Image, error) {
 	return img, nil
 }
 
+// Crop the QR code from the card image.
+// It has to be in the pixel perfect position, from my checks it always is.
+// Will need to crop few fixels around it if it's not or add detection.
 func cropQR(filePath string) (image.Image, error) {
 	img, err := decodeImage(filePath)
 	if err != nil {
@@ -58,14 +62,59 @@ func cropQR(filePath string) (image.Image, error) {
 
 	cropped := sub.SubImage(rect)
 
-	err = saveImage(cropped, "cards/qr/temp.jpeg")
-	if err != nil {
-		return nil, err
-	}
-
 	return cropped, nil
 }
 
+// Trim duplicated rows/columns from the QR code
+// TODO: add preprocessing so we only have black and white pixels only
+// TODO: update the code so it detects duplicate rows/columns
+func fixQR(src image.Image) image.Image {
+	b := src.Bounds()
+	w, h := b.Dx(), b.Dy()
+	drop := []int{1, 4, 8, 9, 12, 15, 19, 20, 23, 26, 31, 32, 34, 38, 39, 42, 45, 49, 50, 53, 56, 60, 61, 64, 68, 69, 72, 75, 79, 80, 83, 87, 88}
+
+	// Build lookup set
+	dropSet := make(map[int]struct{}, len(drop))
+	for _, v := range drop {
+		dropSet[v] = struct{}{}
+	}
+
+	// Calculate new size
+	newW, newH := 0, 0
+	for x := 0; x < w; x++ {
+		if _, remove := dropSet[x]; !remove {
+			newW++
+		}
+	}
+	for y := 0; y < h; y++ {
+		if _, remove := dropSet[y]; !remove {
+			newH++
+		}
+	}
+
+	dst := image.NewRGBA(image.Rect(0, 0, newW, newH))
+
+	// Copy pixels
+	dy := 0
+	for y := 0; y < h; y++ {
+		if _, remove := dropSet[y]; remove {
+			continue
+		}
+		dx := 0
+		for x := 0; x < w; x++ {
+			if _, remove := dropSet[x]; remove {
+				continue
+			}
+			dst.Set(dx, dy, src.At(b.Min.X+x, b.Min.Y+y))
+			dx++
+		}
+		dy++
+	}
+
+	return dst
+}
+
+// Could not decode without upscaling the image
 func decodeGoqr(qr image.Image) ([]string, error) {
 	qrs, err := goqr.Recognize(qr)
 	if err != nil {
@@ -80,6 +129,7 @@ func decodeGoqr(qr image.Image) ([]string, error) {
 	return results, nil
 }
 
+// Decode the QR from an umage using gozxing
 func decodeGozxing(img image.Image) (string, error) {
 	bmp, err := gozxing.NewBinaryBitmapFromImage(img)
 	if err != nil {
@@ -98,4 +148,23 @@ func decodeGozxing(img image.Image) (string, error) {
 	}
 
 	return result.GetText(), nil
+}
+
+// Drop parameters from the links:
+//
+// https://www.fragrantica.com/perfume/Azzaro/Orange-Tonic-1.html?utm_source=qr-code&utm_medium=social-card
+//
+//	->
+//
+// https://www.fragrantica.com/perfume/Azzaro/Orange-Tonic-1.html
+func stripQuery(raw string) (string, error) {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return "", err
+	}
+
+	u.RawQuery = ""
+	u.Fragment = ""
+
+	return u.String(), nil
 }
