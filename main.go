@@ -40,11 +40,22 @@ func setup() (*config.State, error) {
 }
 
 func main() {
+	// Log
+	logFile, err := setupLogging("app.log")
+	if err != nil {
+		log.Fatalf("failed to setup logging: %v", err)
+	}
+	defer logFile.Close()
+
+	// Setup
 	stt, err := setup()
 	if err != nil {
 		log.Fatalf("Error reading config: %v", err)
 	}
 
+	log.Println("application started")
+
+	// Run
 	err = cards.CheckAllLinks(stt)
 	if err != nil {
 		log.Fatalf("Failed running commands: %v", err)

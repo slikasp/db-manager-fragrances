@@ -1,0 +1,163 @@
+2026/03/03 00:26:27 main.go:56: application started
+2026/03/03 00:26:28 cards.go:191: Decoded link matches existing fragrance, ID:17
+2026/03/03 00:26:28 cards.go:191: Decoded link matches existing fragrance, ID:18
+2026/03/03 00:26:29 cards.go:191: Decoded link matches existing fragrance, ID:19
+2026/03/03 00:26:29 cards.go:191: Decoded link matches existing fragrance, ID:20
+2026/03/03 00:26:29 cards.go:191: Decoded link matches existing fragrance, ID:21
+2026/03/03 00:26:29 cards.go:191: Decoded link matches existing fragrance, ID:1
+2026/03/03 00:26:29 cards.go:191: Decoded link matches existing fragrance, ID:3
+2026/03/03 00:26:29 cards.go:191: Decoded link matches existing fragrance, ID:4
+2026/03/03 00:26:30 cards.go:191: Decoded link matches existing fragrance, ID:5
+2026/03/03 00:26:30 cards.go:191: Decoded link matches existing fragrance, ID:6
+2026/03/03 00:26:30 cards.go:191: Decoded link matches existing fragrance, ID:7
+2026/03/03 00:26:30 cards.go:191: Decoded link matches existing fragrance, ID:8
+2026/03/03 00:26:30 cards.go:191: Decoded link matches existing fragrance, ID:9
+2026/03/03 00:26:30 cards.go:191: Decoded link matches existing fragrance, ID:22
+2026/03/03 00:26:31 cards.go:191: Decoded link matches existing fragrance, ID:23
+2026/03/03 00:26:31 cards.go:191: Decoded link matches existing fragrance, ID:10
+2026/03/03 00:26:31 cards.go:191: Decoded link matches existing fragrance, ID:11
+2026/03/03 00:26:31 cards.go:191: Decoded link matches existing fragrance, ID:12
+2026/03/03 00:26:31 cards.go:191: Decoded link matches existing fragrance, ID:13
+2026/03/03 00:29:26 main.go:56: application started
+2026/03/03 00:29:27 cards.go:191: Decoded link matches existing fragrance, ID:17
+2026/03/03 00:29:27 cards.go:191: Decoded link matches existing fragrance, ID:18
+2026/03/03 00:29:27 cards.go:191: Decoded link matches existing fragrance, ID:19
+2026/03/03 00:29:27 cards.go:191: Decoded link matches existing fragrance, ID:20
+2026/03/03 00:29:27 cards.go:191: Decoded link matches existing fragrance, ID:21
+2026/03/03 00:29:27 cards.go:191: Decoded link matches existing fragrance, ID:1
+2026/03/03 00:29:28 cards.go:191: Decoded link matches existing fragrance, ID:3
+2026/03/03 00:29:28 cards.go:191: Decoded link matches existing fragrance, ID:4
+2026/03/03 00:29:28 cards.go:191: Decoded link matches existing fragrance, ID:5
+2026/03/03 00:29:28 cards.go:191: Decoded link matches existing fragrance, ID:6
+2026/03/03 00:29:28 cards.go:191: Decoded link matches existing fragrance, ID:7
+2026/03/03 00:29:28 cards.go:191: Decoded link matches existing fragrance, ID:8
+2026/03/03 00:29:28 cards.go:191: Decoded link matches existing fragrance, ID:9
+2026/03/03 00:29:45 main.go:56: application started
+2026/03/03 00:29:45 cards.go:181: Added new fragrance, ID:123227, URL:https://www.fragrantica.com/perfume/bibiang/walnut-creek-green-123227.html
+2026/03/03 00:29:46 cards.go:181: Added new fragrance, ID:123222, URL:https://www.fragrantica.com/perfume/hermes/musc-pallida-eau-de-parfum-123222.html
+2026/03/03 00:29:46 cards.go:181: Added new fragrance, ID:123219, URL:https://www.fragrantica.com/perfume/walter-s/hussar-123219.html
+2026/03/03 00:29:46 cards.go:181: Added new fragrance, ID:123217, URL:https://www.fragrantica.com/perfume/rasasi/hawas-london-123217.html
+2026/03/03 00:29:46 cards.go:181: Added new fragrance, ID:123216, URL:https://www.fragrantica.com/perfume/regime-des-fleurs/eucalyptic-123216.html
+2026/03/03 00:29:46 cards.go:181: Added new fragrance, ID:123215, URL:https://www.fragrantica.com/perfume/montblanc/neroli-letters-123215.html
+2026/03/03 00:29:47 cards.go:181: Added new fragrance, ID:123212, URL:https://www.fragrantica.com/perfume/adyan-by-anfar/bleu-d-arabie-123212.html
+2026/03/03 00:29:47 cards.go:181: Added new fragrance, ID:123211, URL:https://www.fragrantica.com/perfume/rayhaan/jungle-vibe-123211.html
+2026/03/03 00:29:47 cards.go:181: Added new fragrance, ID:123210, URL:https://www.fragrantica.com/perfume/fine-ry/fireside-vanille-123210.html
+2026/03/03 00:29:47 cards.go:181: Added new fragrance, ID:123209, URL:https://www.fragrantica.com/perfume/fine-ry/rosa-lina-123209.html
+2026/03/03 00:29:48 cards.go:181: Added new fragrance, ID:123208, URL:https://www.fragrantica.com/perfume/fine-ry/dreaming-in-coral-123208.html
+2026/03/03 00:29:48 cards.go:181: Added new fragrance, ID:123207, URL:https://www.fragrantica.com/perfume/fine-ry/athena-123207.html
+2026/03/03 00:29:48 cards.go:181: Added new fragrance, ID:123206, URL:https://www.fragrantica.com/perfume/fine-ry/desert-spirit-123206.html
+2026/03/03 00:29:48 cards.go:181: Added new fragrance, ID:123204, URL:https://www.fragrantica.com/perfume/tamburins/bottari-123204.html
+2026/03/03 00:29:48 cards.go:181: Added new fragrance, ID:123200, URL:https://www.fragrantica.com/perfume/mercedes-benz/mercedes-benz-man-fresh-123200.html
+2026/03/03 00:29:49 cards.go:181: Added new fragrance, ID:123192, URL:https://www.fragrantica.com/perfume/armaf/black-knight-123192.html
+2026/03/03 00:29:49 cards.go:181: Added new fragrance, ID:123187, URL:https://www.fragrantica.com/perfume/armaf/kunafa-chocolate-123187.html
+2026/03/03 00:29:49 cards.go:181: Added new fragrance, ID:123184, URL:https://www.fragrantica.com/perfume/armaf/odyssey-mandarin-sky-vintage-edition-123184.html
+2026/03/03 00:29:49 cards.go:181: Added new fragrance, ID:123183, URL:https://www.fragrantica.com/perfume/armaf/scentasy-matcha-magix-123183.html
+2026/03/03 00:29:49 cards.go:181: Added new fragrance, ID:123180, URL:https://www.fragrantica.com/perfume/granado/yes-nos-temos-banana-123180.html
+2026/03/03 00:29:50 cards.go:181: Added new fragrance, ID:123170, URL:https://www.fragrantica.com/perfume/rdz-parfums/nvcf-123170.html
+2026/03/03 00:29:50 cards.go:181: Added new fragrance, ID:123167, URL:https://www.fragrantica.com/perfume/zimaya/al-embratur-absolu-123167.html
+2026/03/03 00:29:50 cards.go:181: Added new fragrance, ID:123166, URL:https://www.fragrantica.com/perfume/zimaya/daiman-eden-123166.html
+2026/03/03 00:29:50 cards.go:181: Added new fragrance, ID:123165, URL:https://www.fragrantica.com/perfume/zimaya/daiman-eclipse-123165.html
+2026/03/03 00:29:51 cards.go:181: Added new fragrance, ID:123157, URL:https://www.fragrantica.com/perfume/amberfig/mavka-123157.html
+2026/03/03 00:29:51 cards.go:181: Added new fragrance, ID:123153, URL:https://www.fragrantica.com/perfume/amberfig/black-tie-123153.html
+2026/03/03 00:29:51 cards.go:181: Added new fragrance, ID:123151, URL:https://www.fragrantica.com/perfume/amberfig/jardin-des-papillons-123151.html
+2026/03/03 00:29:51 cards.go:181: Added new fragrance, ID:123147, URL:https://www.fragrantica.com/perfume/aaron-terence-hughes/blue-fever-123147.html
+2026/03/03 00:29:51 cards.go:181: Added new fragrance, ID:123146, URL:https://www.fragrantica.com/perfume/aaron-terence-hughes/midnight-fever-123146.html
+2026/03/03 00:29:52 cards.go:181: Added new fragrance, ID:123136, URL:https://www.fragrantica.com/perfume/jamharian-perfume/erato-yellow-123136.html
+2026/03/03 00:29:52 cards.go:181: Added new fragrance, ID:123135, URL:https://www.fragrantica.com/perfume/jamharian-perfume/erato-red-123135.html
+2026/03/03 00:29:52 cards.go:181: Added new fragrance, ID:123134, URL:https://www.fragrantica.com/perfume/jamharian-perfume/erato-black-123134.html
+2026/03/03 00:29:52 cards.go:181: Added new fragrance, ID:123120, URL:https://www.fragrantica.com/perfume/givenchy/gentleman-society-sport-123120.html
+2026/03/03 00:30:48 main.go:56: application started
+2026/03/03 00:30:49 cards.go:191: Decoded link matches existing fragrance, ID:1
+2026/03/03 00:30:49 cards.go:191: Decoded link matches existing fragrance, ID:3
+2026/03/03 00:30:49 cards.go:191: Decoded link matches existing fragrance, ID:4
+2026/03/03 00:30:49 cards.go:191: Decoded link matches existing fragrance, ID:5
+2026/03/03 00:30:49 cards.go:191: Decoded link matches existing fragrance, ID:6
+2026/03/03 00:30:50 cards.go:191: Decoded link matches existing fragrance, ID:7
+2026/03/03 00:30:50 cards.go:191: Decoded link matches existing fragrance, ID:8
+2026/03/03 00:30:50 cards.go:191: Decoded link matches existing fragrance, ID:9
+2026/03/03 00:30:50 cards.go:191: Decoded link matches existing fragrance, ID:10
+2026/03/03 00:30:50 cards.go:191: Decoded link matches existing fragrance, ID:11
+2026/03/03 00:30:50 cards.go:191: Decoded link matches existing fragrance, ID:12
+2026/03/03 00:30:51 cards.go:191: Decoded link matches existing fragrance, ID:13
+2026/03/03 00:30:51 cards.go:191: Decoded link matches existing fragrance, ID:14
+2026/03/03 00:30:51 cards.go:191: Decoded link matches existing fragrance, ID:15
+2026/03/03 00:30:51 cards.go:191: Decoded link matches existing fragrance, ID:16
+2026/03/03 00:30:51 cards.go:191: Decoded link matches existing fragrance, ID:17
+2026/03/03 00:30:51 cards.go:191: Decoded link matches existing fragrance, ID:18
+2026/03/03 00:30:51 cards.go:191: Decoded link matches existing fragrance, ID:19
+2026/03/03 00:30:52 cards.go:191: Decoded link matches existing fragrance, ID:20
+2026/03/03 00:30:52 cards.go:191: Decoded link matches existing fragrance, ID:21
+2026/03/03 00:30:52 cards.go:191: Decoded link matches existing fragrance, ID:22
+2026/03/03 00:30:52 cards.go:191: Decoded link matches existing fragrance, ID:23
+2026/03/03 00:30:52 cards.go:191: Decoded link matches existing fragrance, ID:24
+2026/03/03 00:30:52 cards.go:191: Decoded link matches existing fragrance, ID:25
+2026/03/03 00:30:52 cards.go:191: Decoded link matches existing fragrance, ID:26
+2026/03/03 00:30:53 cards.go:191: Decoded link matches existing fragrance, ID:27
+2026/03/03 00:30:53 cards.go:191: Decoded link matches existing fragrance, ID:28
+2026/03/03 00:30:53 cards.go:191: Decoded link matches existing fragrance, ID:29
+2026/03/03 00:30:53 cards.go:191: Decoded link matches existing fragrance, ID:30
+2026/03/03 00:30:53 cards.go:191: Decoded link matches existing fragrance, ID:31
+2026/03/03 00:30:53 cards.go:191: Decoded link matches existing fragrance, ID:32
+2026/03/03 00:30:54 cards.go:191: Decoded link matches existing fragrance, ID:33
+2026/03/03 00:30:54 cards.go:191: Decoded link matches existing fragrance, ID:34
+2026/03/03 00:30:54 cards.go:191: Decoded link matches existing fragrance, ID:35
+2026/03/03 00:30:54 cards.go:191: Decoded link matches existing fragrance, ID:36
+2026/03/03 00:30:54 cards.go:191: Decoded link matches existing fragrance, ID:37
+2026/03/03 00:30:54 cards.go:191: Decoded link matches existing fragrance, ID:38
+2026/03/03 00:30:54 cards.go:191: Decoded link matches existing fragrance, ID:39
+2026/03/03 00:30:55 cards.go:191: Decoded link matches existing fragrance, ID:40
+2026/03/03 00:30:55 cards.go:191: Decoded link matches existing fragrance, ID:41
+2026/03/03 00:30:55 cards.go:191: Decoded link matches existing fragrance, ID:42
+2026/03/03 00:30:55 cards.go:191: Decoded link matches existing fragrance, ID:43
+2026/03/03 00:30:55 cards.go:191: Decoded link matches existing fragrance, ID:44
+2026/03/03 00:30:55 cards.go:191: Decoded link matches existing fragrance, ID:45
+2026/03/03 00:30:56 cards.go:191: Decoded link matches existing fragrance, ID:46
+2026/03/03 00:30:56 cards.go:191: Decoded link matches existing fragrance, ID:47
+2026/03/03 00:30:56 cards.go:191: Decoded link matches existing fragrance, ID:48
+2026/03/03 00:30:56 cards.go:191: Decoded link matches existing fragrance, ID:49
+2026/03/03 00:30:56 cards.go:191: Decoded link matches existing fragrance, ID:50
+2026/03/03 00:30:56 cards.go:191: Decoded link matches existing fragrance, ID:51
+2026/03/03 00:30:56 cards.go:191: Decoded link matches existing fragrance, ID:52
+2026/03/03 00:30:57 cards.go:191: Decoded link matches existing fragrance, ID:53
+2026/03/03 00:30:57 cards.go:191: Decoded link matches existing fragrance, ID:54
+2026/03/03 00:30:57 cards.go:191: Decoded link matches existing fragrance, ID:55
+2026/03/03 00:30:57 cards.go:191: Decoded link matches existing fragrance, ID:56
+2026/03/03 00:30:57 cards.go:191: Decoded link matches existing fragrance, ID:57
+2026/03/03 00:30:57 cards.go:191: Decoded link matches existing fragrance, ID:58
+2026/03/03 00:30:57 cards.go:191: Decoded link matches existing fragrance, ID:59
+2026/03/03 00:30:58 cards.go:191: Decoded link matches existing fragrance, ID:60
+2026/03/03 00:30:58 cards.go:191: Decoded link matches existing fragrance, ID:61
+2026/03/03 00:30:58 cards.go:191: Decoded link matches existing fragrance, ID:62
+2026/03/03 00:30:58 cards.go:191: Decoded link matches existing fragrance, ID:63
+2026/03/03 00:30:58 cards.go:191: Decoded link matches existing fragrance, ID:64
+2026/03/03 00:30:58 cards.go:191: Decoded link matches existing fragrance, ID:65
+2026/03/03 00:30:59 cards.go:191: Decoded link matches existing fragrance, ID:66
+2026/03/03 00:30:59 cards.go:191: Decoded link matches existing fragrance, ID:67
+2026/03/03 00:30:59 cards.go:191: Decoded link matches existing fragrance, ID:68
+2026/03/03 00:30:59 cards.go:191: Decoded link matches existing fragrance, ID:69
+2026/03/03 00:30:59 cards.go:191: Decoded link matches existing fragrance, ID:70
+2026/03/03 00:30:59 cards.go:191: Decoded link matches existing fragrance, ID:71
+2026/03/03 00:30:59 cards.go:191: Decoded link matches existing fragrance, ID:72
+2026/03/03 00:31:00 cards.go:191: Decoded link matches existing fragrance, ID:73
+2026/03/03 00:31:00 cards.go:191: Decoded link matches existing fragrance, ID:74
+2026/03/03 00:31:00 cards.go:191: Decoded link matches existing fragrance, ID:75
+2026/03/03 00:31:00 cards.go:191: Decoded link matches existing fragrance, ID:76
+2026/03/03 00:31:00 cards.go:191: Decoded link matches existing fragrance, ID:77
+2026/03/03 00:31:00 cards.go:191: Decoded link matches existing fragrance, ID:78
+2026/03/03 00:31:00 cards.go:191: Decoded link matches existing fragrance, ID:79
+2026/03/03 00:31:01 cards.go:191: Decoded link matches existing fragrance, ID:80
+2026/03/03 00:31:01 cards.go:191: Decoded link matches existing fragrance, ID:81
+2026/03/03 00:31:01 cards.go:191: Decoded link matches existing fragrance, ID:82
+2026/03/03 00:31:01 cards.go:191: Decoded link matches existing fragrance, ID:83
+2026/03/03 00:31:01 cards.go:191: Decoded link matches existing fragrance, ID:84
+2026/03/03 00:31:01 cards.go:191: Decoded link matches existing fragrance, ID:85
+2026/03/03 00:31:02 cards.go:191: Decoded link matches existing fragrance, ID:86
+2026/03/03 00:31:02 cards.go:191: Decoded link matches existing fragrance, ID:87
+2026/03/03 00:31:02 cards.go:191: Decoded link matches existing fragrance, ID:88
+2026/03/03 00:31:02 cards.go:191: Decoded link matches existing fragrance, ID:89
+2026/03/03 00:31:02 cards.go:191: Decoded link matches existing fragrance, ID:90
+2026/03/03 00:31:02 cards.go:191: Decoded link matches existing fragrance, ID:91
+2026/03/03 00:31:02 cards.go:191: Decoded link matches existing fragrance, ID:92
+2026/03/03 00:31:03 cards.go:191: Decoded link matches existing fragrance, ID:93
+2026/03/03 00:31:03 cards.go:191: Decoded link matches existing fragrance, ID:94
+2026/03/03 00:31:03 cards.go:191: Decoded link matches existing fragrance, ID:95

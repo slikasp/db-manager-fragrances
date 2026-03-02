@@ -149,6 +149,7 @@ func CheckMissingCards(state *config.State) error {
 
 // Only use this on a fresh database.
 // Not useful otherwise, will only check existing links
+// TODO: rework this so only non existent frags and existing cards are decoded
 func CheckAllLinks(state *config.State) error {
 	ids, err := state.DB.GetExistingCardIDs(context.Background())
 	if err != nil {
@@ -156,7 +157,6 @@ func CheckAllLinks(state *config.State) error {
 	}
 
 	for _, id := range ids {
-		fmt.Printf("Working on ID %d: ", id)
 		card, err := state.DB.GetCard(context.Background(), id)
 		if err != nil {
 			return fmt.Errorf("Could not get card by ID from database: %s", err)
@@ -179,9 +179,10 @@ func CheckAllLinks(state *config.State) error {
 					},
 				})
 				log.Printf("Added new fragrance, ID:%d, URL:%s", id, urlCard)
+			} else {
+				// Real error
+				return fmt.Errorf("Could not get fragrance link from database: %s", err)
 			}
-			// Real error
-			return fmt.Errorf("Could not get fragrance link from database: %s", err)
 		} else {
 			// Compare links if fragrance is already in database
 			if urlCard != urlFrag.String {

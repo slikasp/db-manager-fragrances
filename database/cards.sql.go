@@ -69,6 +69,7 @@ const getExistingCardIDs = `-- name: GetExistingCardIDs :many
 SELECT fragrantica_id
 FROM cards
 WHERE has_card = 't'
+ORDER BY fragrantica_id ASC
 `
 
 func (q *Queries) GetExistingCardIDs(ctx context.Context) ([]int32, error) {
@@ -113,6 +114,7 @@ const getMissingCardIDs = `-- name: GetMissingCardIDs :many
 SELECT fragrantica_id
 FROM cards
 WHERE has_card = 'f'
+ORDER BY fragrantica_id ASC
 `
 
 func (q *Queries) GetMissingCardIDs(ctx context.Context) ([]int32, error) {

@@ -24,12 +24,14 @@ LIMIT 1;
 -- name: GetMissingCardIDs :many
 SELECT fragrantica_id
 FROM cards
-WHERE has_card = 'f';
+WHERE has_card = 'f'
+ORDER BY fragrantica_id ASC;
 
 -- name: GetExistingCardIDs :many
 SELECT fragrantica_id
 FROM cards
-WHERE has_card = 't';
+WHERE has_card = 't'
+ORDER BY fragrantica_id ASC;
 
 -- name: UpdateCard :one
 UPDATE cards 

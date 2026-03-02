@@ -8,8 +8,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/liyue201/goqr"
-
 	"github.com/makiuchi-d/gozxing"
 	"github.com/makiuchi-d/gozxing/qrcode"
 )
@@ -52,7 +50,7 @@ func cropQR(filePath string) (image.Image, error) {
 	}
 
 	// Crop rectangle in *image coordinates* (x0,y0) -> (x1,y1)
-	rect := image.Rect(1045, 10, 1135, 100) // left, top, right, bottom
+	rect := image.Rect(1044, 9, 1136, 101) // left, top, right, bottom
 
 	sub, ok := img.(interface {
 		SubImage(r image.Rectangle) image.Image
@@ -66,13 +64,52 @@ func cropQR(filePath string) (image.Image, error) {
 	return cropped, nil
 }
 
+// Rreturns indices (0-based) of rows to remove.
+// Assumptions:
+// - duplicates only occur as adjacent pairs (y and y+1)
+// - each duplicated row appears only once
+// - black/white, but we just compare exact pixels (RGBA) for safety
+func duplicateLines(img image.Image) []int {
+	b := img.Bounds()
+	w, h := b.Dx(), b.Dy()
+
+	var remove []int
+	for y := 0; y < h-1; y++ {
+		if linesEqual(img, b.Min.X, b.Min.Y+y, w) {
+			// row y and y+1 are identical -> remove the second one
+			remove = append(remove, y+1)
+			y++ // skip next row since we just matched the pair
+		}
+	}
+	return remove
+}
+
+// Compares row at (minX, y0) with the next row (minX, y0+1), width w.
+func linesEqual(img image.Image, minX, y0, w int) bool {
+	y1 := y0 + 1
+	for x := 0; x < w; x++ {
+		c0 := img.At(minX+x, y0)
+		c1 := img.At(minX+x, y1)
+		if c0 != c1 {
+			// Note: color.Color is an interface; direct != is usually fine here,
+			// but to be absolutely consistent across color models, compare RGBA:
+			r0, g0, b0, a0 := c0.RGBA()
+			r1, g1, b1, a1 := c1.RGBA()
+			if r0 != r1 || g0 != g1 || b0 != b1 || a0 != a1 {
+				return false
+			}
+		}
+	}
+	return true
+}
+
 // Trim duplicated rows/columns from the QR code
-// TODO: add preprocessing so we only have black and white pixels only
-// TODO: update the code so it detects duplicate rows/columns
 func fixQR(src image.Image) image.Image {
 	b := src.Bounds()
 	w, h := b.Dx(), b.Dy()
-	drop := []int{1, 4, 8, 9, 12, 15, 19, 20, 23, 26, 31, 32, 34, 38, 39, 42, 45, 49, 50, 53, 56, 60, 61, 64, 68, 69, 72, 75, 79, 80, 83, 87, 88}
+
+	// Rows and columns are duplicated on the same offset
+	drop := duplicateLines(src)
 
 	// Build lookup set
 	dropSet := make(map[int]struct{}, len(drop))
@@ -115,21 +152,6 @@ func fixQR(src image.Image) image.Image {
 	return dst
 }
 
-// Could not decode without upscaling the image
-func decodeGoqr(qr image.Image) ([]string, error) {
-	qrs, err := goqr.Recognize(qr)
-	if err != nil {
-		return nil, err
-	}
-
-	results := make([]string, 0, len(qrs))
-	for _, qr := range qrs {
-		results = append(results, string(qr.Payload))
-	}
-
-	return results, nil
-}
-
 // Decode the QR from an umage using gozxing
 func decodeGozxing(img image.Image) (string, error) {
 	bmp, err := gozxing.NewBinaryBitmapFromImage(img)
@@ -152,12 +174,6 @@ func decodeGozxing(img image.Image) (string, error) {
 }
 
 // Drop parameters from the links:
-//
-// https://www.fragrantica.com/perfume/Azzaro/Orange-Tonic-1.html?utm_source=qr-code&utm_medium=social-card
-//
-//	->
-//
-// https://www.fragrantica.com/perfume/Azzaro/Orange-Tonic-1.html
 func stripQuery(raw string) (string, error) {
 	u, err := url.Parse(raw)
 	if err != nil {
@@ -179,28 +195,33 @@ func getLinkFromCard(cardPath string) (string, error) {
 	}
 
 	// ONLY FOR TESTING
-	saveImage(img, "cards/cards/qr/temp_crop.jpeg")
+	// saveImage(img, "cards/cards/qr/temp_crop.jpeg")
 
-	// strip duplicate rows/columns from QR image
-	fixed := fixQR(img)
+	img = PreprocessQR(img)
 
 	// ONLY FOR TESTING
-	saveImage(fixed, "cards/cards/qr/temp_fixed.jpeg")
+	// saveImage(img, "cards/cards/qr/temp_prep.jpeg")
+
+	// strip duplicate rows/columns from QR image
+	img = fixQR(img)
+
+	// ONLY FOR TESTING
+	// saveImage(img, "cards/cards/qr/temp_fixed.jpeg")
 
 	// decode QR code
-	link, err := decodeGozxing(fixed)
+	link, err := decodeGozxing(img)
 	if err != nil {
 		return "", fmt.Errorf("Failed decoding the QR code: %s", err)
 	}
 
 	// strip query parameters from link
-	stripped, err := stripQuery(link)
+	link, err = stripQuery(link)
 	if err != nil {
 		return "", fmt.Errorf("Failed stripping query parameters from URL: %s", err)
 	}
 
 	// normalize string
-	lower := strings.ToLower(stripped)
+	link = strings.ToLower(link)
 
-	return lower, nil
+	return link, nil
 }

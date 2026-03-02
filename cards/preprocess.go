@@ -8,11 +8,24 @@ import (
 	xdraw "golang.org/x/image/draw"
 )
 
-func preprocessForQR(src image.Image) image.Image {
-	const (
-		border = 16
-		scale  = 4
-	)
+// Chain needed functions here to add specific preprocessing
+func PreprocessQR(src image.Image) image.Image {
+	return qrOtsuBinarize(src)
+}
+
+func qrUpscale(src image.Image) image.Image {
+	scale := 4
+
+	// upscale (nearest neighbor)
+	pb := src.Bounds()
+	up := image.NewRGBA(image.Rect(0, 0, pb.Dx()*scale, pb.Dy()*scale))
+	xdraw.NearestNeighbor.Scale(up, up.Bounds(), src, pb, draw.Src, nil)
+
+	return up
+}
+
+func qrAddQuietZone(src image.Image) image.Image {
+	border := 16
 
 	// add quiet zone (white border)
 	b := src.Bounds()
@@ -26,16 +39,10 @@ func preprocessForQR(src image.Image) image.Image {
 		draw.Src,
 	)
 
-	// upscale (nearest neighbor)
-	pb := padded.Bounds()
-	up := image.NewRGBA(image.Rect(0, 0, pb.Dx()*scale, pb.Dy()*scale))
-	xdraw.NearestNeighbor.Scale(up, up.Bounds(), padded, pb, draw.Src, nil)
-
-	// binarize (Otsu)
-	return otsuBinarize(up)
+	return padded
 }
 
-func otsuBinarize(img image.Image) *image.Gray {
+func qrOtsuBinarize(img image.Image) image.Image {
 	b := img.Bounds()
 	g := image.NewGray(b)
 
