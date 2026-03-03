@@ -6,9 +6,9 @@ import (
 	"log"
 
 	_ "github.com/lib/pq"
-	"github.com/slikasp/dbmanfrags/cards"
 	"github.com/slikasp/dbmanfrags/config"
 	"github.com/slikasp/dbmanfrags/database"
+	"github.com/slikasp/dbmanfrags/fragrances"
 )
 
 func setup() (*config.State, error) {
@@ -56,7 +56,7 @@ func main() {
 	log.Println("application started")
 
 	// Run
-	err = cards.CheckAllLinks(stt)
+	err = fragrances.AddMissingFragrances(stt)
 	if err != nil {
 		log.Fatalf("Failed running commands: %v", err)
 	}

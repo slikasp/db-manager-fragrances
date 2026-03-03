@@ -1,5 +1,8 @@
 cards/en
-cards/cards/en
+cards/cards/en/*
+cards/cards/qr/*
 config.json
 commands.txt
 info.txt
+history/
+app.log

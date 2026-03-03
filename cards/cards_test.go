@@ -22,7 +22,7 @@ func TestMakers(t *testing.T) {
 }
 
 func TestDownload(t *testing.T) {
-	card1, err := downloadCard(1)
+	card1, err := downloadCard(9764)
 	if err != nil {
 		t.Errorf("Download failed: %v", err)
 	}

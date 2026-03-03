@@ -147,54 +147,6 @@ func CheckMissingCards(state *config.State) error {
 	return nil
 }
 
-// Only use this on a fresh database.
-// Not useful otherwise, will only check existing links
-// TODO: rework this so only non existent frags and existing cards are decoded
-func CheckAllLinks(state *config.State) error {
-	ids, err := state.DB.GetExistingCardIDs(context.Background())
-	if err != nil {
-		return fmt.Errorf("Failed getting IDs from database: %s", err)
-	}
-
-	for _, id := range ids {
-		card, err := state.DB.GetCard(context.Background(), id)
-		if err != nil {
-			return fmt.Errorf("Could not get card by ID from database: %s", err)
-		}
-
-		urlCard, err := getLinkFromCard(card.Image)
-		if err != nil {
-			return fmt.Errorf("Failed parsing QR from image: %s", err)
-		}
-
-		urlFrag, err := state.DB.GetFragranceLink(context.Background(), id)
-		if err != nil {
-			// No fragrance with this ID -> add new
-			if errors.Is(err, sql.ErrNoRows) {
-				state.DB.AddFragranceLink(context.Background(), database.AddFragranceLinkParams{
-					FragranticaID: id,
-					Url: sql.NullString{
-						String: urlCard,
-						Valid:  true,
-					},
-				})
-				log.Printf("Added new fragrance, ID:%d, URL:%s", id, urlCard)
-			} else {
-				// Real error
-				return fmt.Errorf("Could not get fragrance link from database: %s", err)
-			}
-		} else {
-			// Compare links if fragrance is already in database
-			if urlCard != urlFrag.String {
-				return fmt.Errorf("URL mismatch (card:frag): %s:%s", urlCard, urlFrag.String)
-			}
-			log.Printf("Decoded link matches existing fragrance, ID:%d", id)
-		}
-	}
-
-	return nil
-}
-
 // TODOS
 
 // func - look for new cards: get max number with card, check for next ~100 cards, if found, update the max number

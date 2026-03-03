@@ -50,7 +50,7 @@ func cropQR(filePath string) (image.Image, error) {
 	}
 
 	// Crop rectangle in *image coordinates* (x0,y0) -> (x1,y1)
-	rect := image.Rect(1044, 9, 1136, 101) // left, top, right, bottom
+	rect := image.Rect(1041, 6, 1139, 104) // left, top, right, bottom
 
 	sub, ok := img.(interface {
 		SubImage(r image.Rectangle) image.Image
@@ -161,9 +161,10 @@ func decodeGozxing(img image.Image) (string, error) {
 
 	reader := qrcode.NewQRCodeReader()
 
-	hints := map[gozxing.DecodeHintType]interface{}{
-		gozxing.DecodeHintType_TRY_HARDER: true,
-	}
+	// hints := map[gozxing.DecodeHintType]interface{}{
+	// 	gozxing.DecodeHintType_TRY_HARDER: true,
+	// }
+	hints := map[gozxing.DecodeHintType]interface{}{}
 
 	result, err := reader.Decode(bmp, hints)
 	if err != nil {
@@ -187,7 +188,7 @@ func stripQuery(raw string) (string, error) {
 }
 
 // Gets the link to the fragrance from it's card image
-func getLinkFromCard(cardPath string) (string, error) {
+func GetLinkFromCard(cardPath string) (string, error) {
 	// Crop QR from card image
 	img, err := cropQR(cardPath)
 	if err != nil {
@@ -206,7 +207,7 @@ func getLinkFromCard(cardPath string) (string, error) {
 	img = fixQR(img)
 
 	// ONLY FOR TESTING
-	// saveImage(img, "cards/cards/qr/temp_fixed.jpeg")
+	saveImage(img, "cards/cards/qr/temp_fixed.jpeg")
 
 	// decode QR code
 	link, err := decodeGozxing(img)

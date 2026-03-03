@@ -5,7 +5,7 @@ import (
 )
 
 func TestCropFix(t *testing.T) {
-	path := "cards/en/p_c_1.jpeg"
+	path := "cards/en/p_c_9764.jpeg"
 
 	img, err := cropQR(path)
 	if err != nil {
@@ -16,6 +16,8 @@ func TestCropFix(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to save: %v", err)
 	}
+
+	img = PreprocessQR(img)
 
 	fixed := fixQR(img)
 
@@ -28,12 +30,14 @@ func TestCropFix(t *testing.T) {
 }
 
 func TestResolveQR(t *testing.T) {
-	path := "cards/en/p_c_1.jpeg"
+	path := "cards/en/p_c_9764.jpeg"
 
 	img, err := cropQR(path)
 	if err != nil {
 		t.Errorf("Could not crop: %v", err)
 	}
+
+	img = PreprocessQR(img)
 
 	fixed := fixQR(img)
 
@@ -47,7 +51,7 @@ func TestResolveQR(t *testing.T) {
 		t.Errorf("Could not strip URL: %v", err)
 	}
 
-	expected := "https://www.fragrantica.com/perfume/Azzaro/Orange-Tonic-1.html"
+	expected := "https://www.fragrantica.com/perfume/I-Profumi-di-Firenze/Acqua-Chiara-9764.html"
 	if stripped != expected {
 		t.Errorf("Unexpected result: %s:%s", stripped, expected)
 	}
