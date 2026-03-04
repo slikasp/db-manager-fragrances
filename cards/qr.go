@@ -207,7 +207,7 @@ func GetLinkFromCard(cardPath string) (string, error) {
 	img = fixQR(img)
 
 	// ONLY FOR TESTING
-	saveImage(img, "cards/cards/qr/temp_fixed.jpeg")
+	// saveImage(img, "cards/cards/qr/temp_fixed.jpeg")
 
 	// decode QR code
 	link, err := decodeGozxing(img)

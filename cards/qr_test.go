@@ -30,7 +30,7 @@ func TestCropFix(t *testing.T) {
 }
 
 func TestResolveQR(t *testing.T) {
-	path := "cards/en/p_c_9764.jpeg"
+	path := "cards/en/p_c_24894.jpeg"
 
 	img, err := cropQR(path)
 	if err != nil {

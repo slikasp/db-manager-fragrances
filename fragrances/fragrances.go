@@ -71,12 +71,14 @@ func AddMissingFragrances(state *config.State) error {
 	for _, id := range ids {
 		card, err := state.DB.GetCard(context.Background(), id)
 		if err != nil {
-			return fmt.Errorf("Could not get card by ID %d from database: %s", id, err)
+			return fmt.Errorf("Could not get card from database: %s", err)
 		}
 
 		urlCard, err := cards.GetLinkFromCard(card.Image)
 		if err != nil {
-			return fmt.Errorf("Failed parsing QR from image: %s", err)
+			// return fmt.Errorf("Failed parsing QR for %d: %s", id, err)
+			log.Printf("Failed decoding card ID %d", id)
+			continue
 		}
 
 		// Do we need a check for existing fragrances?
