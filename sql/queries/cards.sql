@@ -43,3 +43,8 @@ RETURNING *;
 UPDATE cards 
 SET downloaded = NOW()
 WHERE fragrantica_id = $1;
+
+-- name: InvalidateCard :exec
+UPDATE cards 
+SET has_card = 'f'
+WHERE fragrantica_id = $1;

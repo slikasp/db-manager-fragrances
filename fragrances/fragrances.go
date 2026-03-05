@@ -76,8 +76,10 @@ func AddMissingFragrances(state *config.State) error {
 
 		urlCard, err := cards.GetLinkFromCard(card.Image)
 		if err != nil {
-			// return fmt.Errorf("Failed parsing QR for %d: %s", id, err)
+			// If QR decoding fails, set has_card to false, the card will be redownloaded on the next check
+			// This is required because some cards are generated with empty QR
 			log.Printf("Failed decoding card ID %d", id)
+			state.DB.InvalidateCard(context.Background(), id)
 			continue
 		}
 

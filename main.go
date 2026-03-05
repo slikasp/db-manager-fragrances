@@ -6,6 +6,7 @@ import (
 	"log"
 
 	_ "github.com/lib/pq"
+	"github.com/slikasp/dbmanfrags/cards"
 	"github.com/slikasp/dbmanfrags/config"
 	"github.com/slikasp/dbmanfrags/database"
 	"github.com/slikasp/dbmanfrags/fragrances"
@@ -53,11 +54,18 @@ func main() {
 		log.Fatalf("Error reading config: %v", err)
 	}
 
-	log.Println("application started")
+	log.Println(">>>application started")
 
 	// Run
+	err = cards.CheckMissingCards(stt)
+	if err != nil {
+		log.Fatalf("Failed getting new cards: %v", err)
+	}
+
 	err = fragrances.AddMissingFragrances(stt)
 	if err != nil {
-		log.Fatalf("Failed running commands: %v", err)
+		log.Fatalf("Failed adding new fragrances: %v", err)
 	}
+
+	log.Println(">>>application closed")
 }

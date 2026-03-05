@@ -5,7 +5,9 @@ import (
 )
 
 func TestCropFix(t *testing.T) {
-	path := "cards/en/p_c_9764.jpeg"
+	path := "cards/en/p_c_24894.jpeg"
+	// path := "cards/en/p_c_83846.jpeg"
+	// path := "cards/en/p_c_107552.jpeg"
 
 	img, err := cropQR(path)
 	if err != nil {
@@ -31,6 +33,8 @@ func TestCropFix(t *testing.T) {
 
 func TestResolveQR(t *testing.T) {
 	path := "cards/en/p_c_24894.jpeg"
+	// path := "cards/en/p_c_83846.jpeg"
+	// path := "cards/en/p_c_107552.jpeg"
 
 	img, err := cropQR(path)
 	if err != nil {
@@ -51,7 +55,7 @@ func TestResolveQR(t *testing.T) {
 		t.Errorf("Could not strip URL: %v", err)
 	}
 
-	expected := "https://www.fragrantica.com/perfume/I-Profumi-di-Firenze/Acqua-Chiara-9764.html"
+	expected := "https://www.fragrantica.com/perfume/Puma/Puma-Yellow-Brasil-Edition-24894.html"
 	if stripped != expected {
 		t.Errorf("Unexpected result: %s:%s", stripped, expected)
 	}

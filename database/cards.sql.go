@@ -140,6 +140,17 @@ func (q *Queries) GetMissingCardIDs(ctx context.Context) ([]int32, error) {
 	return items, nil
 }
 
+const invalidateCard = `-- name: InvalidateCard :exec
+UPDATE cards 
+SET has_card = 'f'
+WHERE fragrantica_id = $1
+`
+
+func (q *Queries) InvalidateCard(ctx context.Context, fragranticaID int32) error {
+	_, err := q.db.ExecContext(ctx, invalidateCard, fragranticaID)
+	return err
+}
+
 const refreshCard = `-- name: RefreshCard :exec
 UPDATE cards 
 SET downloaded = NOW()

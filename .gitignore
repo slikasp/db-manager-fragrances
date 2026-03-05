@@ -4,5 +4,5 @@ cards/cards/qr/*
 config.json
 commands.txt
 info.txt
-history/
+/logs
 app.log
