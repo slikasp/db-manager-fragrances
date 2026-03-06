@@ -46,7 +46,7 @@ func decodeImage(filePath string) (image.Image, error) {
 func cropQR(filePath string) (image.Image, error) {
 	img, err := decodeImage(filePath)
 	if err != nil {
-		return nil, fmt.Errorf("Could not decode image %s: %s", filePath, err)
+		return nil, fmt.Errorf("Could not decode image %s: %w", filePath, err)
 	}
 
 	// Crop rectangle in *image coordinates* (x0,y0) -> (x1,y1)
@@ -156,7 +156,7 @@ func fixQR(src image.Image) image.Image {
 func decodeGozxing(img image.Image) (string, error) {
 	bmp, err := gozxing.NewBinaryBitmapFromImage(img)
 	if err != nil {
-		return "", fmt.Errorf("Failed converting to bitmap: %s", err)
+		return "", fmt.Errorf("Failed converting image to bitmap: %w", err)
 	}
 
 	reader := qrcode.NewQRCodeReader()
@@ -168,7 +168,7 @@ func decodeGozxing(img image.Image) (string, error) {
 
 	result, err := reader.Decode(bmp, hints)
 	if err != nil {
-		return "", fmt.Errorf("Failed decoding bitmap: %s", err)
+		return "", fmt.Errorf("Failed decoding bitmap: %w", err)
 	}
 
 	return result.GetText(), nil
@@ -192,7 +192,7 @@ func GetLinkFromCard(cardPath string) (string, error) {
 	// Crop QR from card image
 	img, err := cropQR(cardPath)
 	if err != nil {
-		return "", fmt.Errorf("Failed to crop image %s: %s", cardPath, err)
+		return "", fmt.Errorf("Failed to crop image %s: %w", cardPath, err)
 	}
 
 	// ONLY FOR TESTING
@@ -212,13 +212,13 @@ func GetLinkFromCard(cardPath string) (string, error) {
 	// decode QR code
 	link, err := decodeGozxing(img)
 	if err != nil {
-		return "", fmt.Errorf("Failed decoding the QR code: %s", err)
+		return "", fmt.Errorf("Failed decoding the QR code from %s: %w", cardPath, err)
 	}
 
 	// strip query parameters from link
 	link, err = stripQuery(link)
 	if err != nil {
-		return "", fmt.Errorf("Failed stripping query parameters from URL: %s", err)
+		return "", fmt.Errorf("Failed stripping query parameters from URL %s: %w", link, err)
 	}
 
 	// normalize string

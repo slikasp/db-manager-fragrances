@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 
 	_ "github.com/lib/pq"
@@ -41,7 +42,8 @@ func setup() (*config.State, error) {
 }
 
 func main() {
-	// Log
+	fmt.Println("---Application started---")
+
 	logFile, err := setupLogging("app.log")
 	if err != nil {
 		log.Fatalf("failed to setup logging: %v", err)
@@ -53,19 +55,24 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error reading config: %v", err)
 	}
+	fmt.Println("--Setup complete--")
 
-	log.Println(">>>application started")
-
-	// Run
-	err = cards.CheckMissingCards(stt)
-	if err != nil {
-		log.Fatalf("Failed getting new cards: %v", err)
-	}
-
+	// Go through newly found cards, try decoding them and add new fragrance entries
+	fmt.Println("-Adding missing fragrances-")
 	err = fragrances.AddMissingFragrances(stt)
 	if err != nil {
 		log.Fatalf("Failed adding new fragrances: %v", err)
 	}
 
-	log.Println(">>>application closed")
+	// Go through all IDs that have no cards and update if they are now present
+	// TODO: make this run in parallel to everything else and remove loggin to file
+	fmt.Println("-Checking missing cards started-")
+	err = cards.CheckMissingCards(stt)
+	if err != nil {
+		log.Fatalf("Failed getting new cards: %v", err)
+	}
+
+	// New function to check for new fragrances
+
+	log.Println("---Application closed---")
 }
