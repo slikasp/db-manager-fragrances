@@ -58,7 +58,7 @@ func downloadCard(cardID int32) (database.AddCardParams, error) {
 		return card, fmt.Errorf("Could not write image %s: %w", card.Image, err)
 	}
 
-	log.Printf("Card downloaded for ID %d\n", cardID)
+	// log.Printf("Card downloaded for ID %d\n", cardID)
 
 	return card, nil
 }
@@ -149,13 +149,65 @@ func CheckMissingCards(state *config.State) error {
 
 // TODOS
 
-// func - look for new cards:
-// get max number with card,
-// check for next ~100-1000 cards,
-// if found, update the max number
+// Need to remove all cards from the database that have no card after last ID with a card
+// Then run this, because it will create card entries in DB whether they are available or not
+func FindNewCards(state *config.State, cardsToCheck int) error {
+	id, err := state.DB.GetLastCardID(context.Background())
+	if err != nil {
+		return fmt.Errorf("Failed getting last card ID from database: %w", err)
+	}
 
-// func FindLastCard(state *config.State) error {
-// 	lastID, err := state.DB.GetLastCardID(context.Background())
+	cardsFound := 0
+	lastFound := id
 
-// 	return nil
-// }
+	// Check 100 cards after the last one
+	for id <= lastFound+int32(cardsToCheck) {
+		// Try downloading the card (existing or not)
+		card, err := downloadCard(id)
+
+		if card.HasCard {
+			// Card found -> look for 100 more cards
+			cardsFound++
+			lastFound = id
+			// If card was found, but error still returned -> stop execution
+			if err != nil {
+				return fmt.Errorf("Card download failed for ID %d: %w", id, err)
+			}
+
+			// If found, no errors -> Check if card already exists
+			_, err = state.DB.GetCard(context.Background(), id)
+			if err != nil {
+				// doesn't exist -> Add new card to the database
+				if errors.Is(err, sql.ErrNoRows) {
+					_, err = state.DB.AddCard(context.Background(), card)
+					if err != nil {
+						return fmt.Errorf("Adding card to database failed for ID %d: %w", id, err)
+					}
+					log.Printf("New card added, ID:%d, URL:%s", id, card.Image)
+				} else {
+					// Real error -> stop execution
+					return fmt.Errorf("Could not get card from the database with ID %d: %w", id, err)
+				}
+			} else {
+				// Update card if it exists in the database, card might have appeared (and we just downloaded it)
+				_, err = state.DB.UpdateCard(context.Background(), database.UpdateCardParams{
+					FragranticaID: card.FragranticaID,
+					Image:         card.Image,
+					HasCard:       card.HasCard,
+				})
+				if err != nil {
+					return fmt.Errorf("Could not update card with ID %d: %w", id, err)
+				}
+			}
+
+			// Card already exists in database -> do nothing, CheckMissingCards will recheck
+		}
+		// Card not foun -> proceed to next ID
+		id++
+
+	}
+
+	log.Printf("Last found card: %d. Cards found: %d\n", lastFound, cardsFound)
+
+	return nil
+}

@@ -57,6 +57,13 @@ func main() {
 	}
 	fmt.Println("--Setup complete--")
 
+	// Go throug all IDs after the last found card and look for existing new cards
+	fmt.Println("-Looking for new cards-")
+	err = cards.FindNewCards(stt, 100)
+	if err != nil {
+		log.Fatalf("Failed finding new cards: %v", err)
+	}
+
 	// Go through newly found cards, try decoding them and add new fragrance entries
 	fmt.Println("-Adding missing fragrances-")
 	err = fragrances.AddMissingFragrances(stt)
@@ -71,8 +78,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed getting new cards: %v", err)
 	}
-
-	// New function to check for new fragrances
 
 	log.Println("---Application closed---")
 }
