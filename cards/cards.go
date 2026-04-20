@@ -43,6 +43,7 @@ func downloadCard(cardID int32) (database.AddCardParams, error) {
 	if resp.StatusCode != http.StatusOK {
 		return card, fmt.Errorf("No card for ID %d", cardID)
 	}
+
 	// If response is ok we set HasCard to true, after this we don't expect more errors so need to handle that
 	card.HasCard = true
 
@@ -118,6 +119,9 @@ func CheckMissingCards(state *config.State) error {
 		return fmt.Errorf("Failed getting missing cards from database: %w", err)
 	}
 
+	log.Printf("Missing cards: %d", len(cardIDs))
+	cardsAdded := 0
+
 	for _, id := range cardIDs {
 		card, err := downloadCard(id)
 		if card.HasCard {
@@ -134,16 +138,20 @@ func CheckMissingCards(state *config.State) error {
 				if err != nil {
 					return fmt.Errorf("Could not update card with ID %d: %w", id, err)
 				}
+				cardsAdded += 1
 				log.Printf("New card added, ID:%d, URL:%s", id, card.Image)
 			}
 		} else {
+			// TODO: create a custom error type for card downloads and log only actual errors
+			// these are 100% no card found so far
 			// Log error (most likely card not found + ID)
-			log.Println(err)
+			// log.Println(err)
 		}
 
 		// Proceed to next id if no card found
 	}
 
+	log.Printf("New cards added: %d / %d", cardsAdded, len(cardIDs))
 	return nil
 }
 
@@ -158,35 +166,38 @@ func FindNewCards(state *config.State, cardsToCheck int) error {
 	}
 
 	cardsFound := 0
+	currentID := id + 1
 	lastFound := id
 
-	// Check 100 cards after the last one
-	for id <= lastFound+int32(cardsToCheck) {
+	// Check cardsToCheck number of cards after the last found
+	for currentID <= lastFound+int32(cardsToCheck) {
 		// Try downloading the card (existing or not)
-		card, err := downloadCard(id)
+		card, err := downloadCard(currentID)
+
+		// log.Printf("checking: %d", id)
 
 		if card.HasCard {
 			// Card found -> look for 100 more cards
-			cardsFound++
-			lastFound = id
+			cardsFound += 1
+			lastFound = currentID
 			// If card was found, but error still returned -> stop execution
 			if err != nil {
-				return fmt.Errorf("Card download failed for ID %d: %w", id, err)
+				return fmt.Errorf("Card download failed for ID %d: %w", currentID, err)
 			}
 
 			// If found, no errors -> Check if card already exists
-			_, err = state.DB.GetCard(context.Background(), id)
+			_, err = state.DB.GetCard(context.Background(), currentID)
 			if err != nil {
 				// doesn't exist -> Add new card to the database
 				if errors.Is(err, sql.ErrNoRows) {
 					_, err = state.DB.AddCard(context.Background(), card)
 					if err != nil {
-						return fmt.Errorf("Adding card to database failed for ID %d: %w", id, err)
+						return fmt.Errorf("Adding card to database failed for ID %d: %w", currentID, err)
 					}
-					log.Printf("New card added, ID:%d, URL:%s", id, card.Image)
+					log.Printf("New card added, ID:%d, URL:%s", currentID, card.Image)
 				} else {
 					// Real error -> stop execution
-					return fmt.Errorf("Could not get card from the database with ID %d: %w", id, err)
+					return fmt.Errorf("Could not get card from the database with ID %d: %w", currentID, err)
 				}
 			} else {
 				// Update card if it exists in the database, card might have appeared (and we just downloaded it)
@@ -196,14 +207,14 @@ func FindNewCards(state *config.State, cardsToCheck int) error {
 					HasCard:       card.HasCard,
 				})
 				if err != nil {
-					return fmt.Errorf("Could not update card with ID %d: %w", id, err)
+					return fmt.Errorf("Could not update card with ID %d: %w", currentID, err)
 				}
 			}
 
 			// Card already exists in database -> do nothing, CheckMissingCards will recheck
 		}
 		// Card not foun -> proceed to next ID
-		id++
+		currentID += 1
 
 	}
 

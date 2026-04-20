@@ -1,18 +1,24 @@
 # db-manager-fragrances
 
-Database manager for a global list of fragrances, used in my FragranceTrackGo project. The database itself is hosted on Supabase.
+Database manager for a global list of fragrances. The database itself is hosted on Supabase, but I make snapshots available on Kaggle.com.
 
-Used a fragrantica.com dataset from 2025 to start (24k records), found here: https://www.kaggle.com/datasets/olgagmiufana1/fragrantica-com-fragrance-dataset
-Made some modifications for ease of use and developing this manager to update the database.
+This is a database managet that maintains an up to date list of all fragrances in the world with various user submitted metrics from fragrantica.com.
+It is parsing fragrance images with QR codes and looking for specific information in the HTML data of the encoded link.
 
-Added functions to download the 'cards' that they have for most fragrances, they contain most of the information including a QR code with URL to the fragrance itself.
-Currently over 80k records with existing cards (8 GB in size). Planning to have them locally and update if needed (another option is to fetch them from the source).
-QR codes in the cards are stretched in both directions for some reason, so they have to be fixed before decoding, most of them decoded and added to the original list of fragrances.
+I recommend building and running it on a server if you want to maintain your own database, first run will take some time (Currently there are over 80k records with cards, 8 GB in size).
+<ol> What it does:
+<li> Checks for any new fragrance cards that are not in cards table and downloads them
+<li> Parses QR code on the downloaded cards and add new items in fragrances table
+<li> Parses fragrance HTML for details and updates fragrances table
+<li> Goes through all IDs that didn't have a card and checks if that changed
+<li> Checks if there were updates to existing fragrances and updates database if needed
 
-Getting remaining details from HTML will be a challenge, but should be pissible based on my research done for the Python equivalent.
+Current status:
 
 <ol> Current plan to get the required details:
 <li> Download all available cards (their links are the same except for ID) - DONE
 <li> Scan the QRs in the cards to get the links to fragrances - DONE
 <li> Parse HTML of the fragrance links for the rest of the details - IN PROGRESS
 </ol>
+
+The original dataset from 2024 that I started with (24k records) can be found here: https://www.kaggle.com/datasets/olgagmiufana1/fragrantica-com-fragrance-dataset
