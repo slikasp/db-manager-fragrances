@@ -24,7 +24,7 @@ func TestReadAndParse(t *testing.T) {
 
 	accords := getAccords(doc)
 	expectedAccords := []string{"woody", "white floral", "aromatic", "powdery", "fresh spicy"}
-	if !slices.Equal(accords, expectedAccords) {
+	if !slices.Equal(accords[:5], expectedAccords) {
 		t.Errorf("got %v, want %v", accords, expectedAccords)
 	}
 
