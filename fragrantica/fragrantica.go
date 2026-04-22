@@ -2,6 +2,7 @@ package fragrantica
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 	http "github.com/bogdanfinn/fhttp"
@@ -173,18 +174,21 @@ func ParsePage(url string) (FragranceParams, error) {
 	// #pyramid > div.relative.bg-linear-to-br.from-white.to-zinc-50\/80.dark\:from-zinc-800.dark\:to-zinc-800\/80.rounded-xl.shadow-sm.shadow-zinc-300\/50.dark\:shadow-black\/20.overflow-hidden > div.p-5 > div > div.mt-6.space-y-1 > div.mx-auto.max-w-2xl
 	// etc
 
-	// Parfumer1 -
-	// Parfumer2 -
-	// #app > main > div > div.col-span-12.sm\:col-span-9.lg\:col-span-9.lg\:pl-1.lg\:mt-1 > div.bg-white.dark\:bg-zinc-900.dark\:text-zinc-100.p-2.md\:p-4.pb-20.rounded-md.relative > div:nth-child(9) > div.grid.grid-cols-2.md\:grid-cols-3.lg\:grid-cols-4.gap-3.md\:gap-4
-	// <a href="/noses/Lucas_Sieuzac.html" class="group flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 bg-linear-to-br from-white to-zinc-50 dark:from-zinc-800 dark:to-zinc-800/80 rounded-xl border border-zinc-200/60 dark:border-zinc-700/50 shadow-sm hover:shadow-md dark:shadow-black/20 hover:border-teal-300 dark:hover:border-teal-600/50 transition-shadow duration-150"><div class="relative shrink-0"><img src="https://frgs.me/mdimg/nosevi/fit.168.jpg" class="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover ring-2 ring-zinc-200 dark:ring-zinc-600 group-hover:ring-teal-400 dark:group-hover:ring-teal-500 transition-shadow duration-150" alt="Lucas Sieuzac"></div><span class="text-sm font-medium text-zinc-700 dark:text-zinc-200 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors"> Lucas Sieuzac </span></a></div>
-	// can be 1-4 perfumers, only need 2, handle nil
+	// Parfumer1-2
+	perfumers := getPerfumers(doc)
+	params.Perfumer1 = perfumers[0]
+	if len(perfumers) > 1 {
+		params.Perfumer2 = perfumers[1]
+	}
 
-	// Accord1
-	// Accord2
-	// Accord3
-	// Accord4
-	// Accord5
-	// accords := getAccords(doc)
+	// Accords1-5
+	accords := getAccords(doc)
+	params.Accord1 = accords[0]
+	params.Accord2 = accords[1]
+	params.Accord3 = accords[2]
+	params.Accord4 = accords[3]
+	params.Accord5 = accords[4]
+
 	return params, nil
 }
 
@@ -193,9 +197,31 @@ func getAccords(doc *goquery.Document) []string {
 
 	doc.Find("main div.flex.flex-col.w-full.max-w-\\[280px\\].md\\:max-w-\\[320px\\]").Each(func(i int, s *goquery.Selection) {
 		s.Find("span.truncate").Each(func(j int, item *goquery.Selection) {
-			results = append(results, item.Text())
+			results = append(results, strings.ToLower(strings.TrimSpace(item.Text())))
 		})
 	})
+
+	return results
+}
+
+func getPerfumers(doc *goquery.Document) []string {
+	var results []string
+
+	// Perfumer1 (optional)
+	// Perfumer2 (optional)
+	// #app > main > div > div.col-span-12.sm\:col-span-9.lg\:col-span-9.lg\:pl-1.lg\:mt-1 > div.bg-white.dark\:bg-zinc-900.dark\:text-zinc-100.p-2.md\:p-4.pb-20.rounded-md.relative > div:nth-child(9) > div.grid.grid-cols-2.md\:grid-cols-3.lg\:grid-cols-4.gap-3.md\:gap-4
+	// <a href="/noses/Lucas_Sieuzac.html" class="group flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 bg-linear-to-br from-white to-zinc-50 dark:from-zinc-800 dark:to-zinc-800/80 rounded-xl border border-zinc-200/60 dark:border-zinc-700/50 shadow-sm hover:shadow-md dark:shadow-black/20 hover:border-teal-300 dark:hover:border-teal-600/50 transition-shadow duration-150"><div class="relative shrink-0"><img src="https://frgs.me/mdimg/nosevi/fit.168.jpg" class="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover ring-2 ring-zinc-200 dark:ring-zinc-600 group-hover:ring-teal-400 dark:group-hover:ring-teal-500 transition-shadow duration-150" alt="Lucas Sieuzac"></div><span class="text-sm font-medium text-zinc-700 dark:text-zinc-200 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors"> Lucas Sieuzac </span></a></div>
+	// can be 1-4 perfumers, only need 2, handle nil
+
+	doc.Find("main div.grid.grid-cols-2.md\\:grid-cols-3.lg\\:grid-cols-4.gap-3.md\\:gap-4").Each(func(i int, s *goquery.Selection) {
+		s.Find("span").Each(func(j int, item *goquery.Selection) {
+			results = append(results, strings.ToLower(strings.TrimSpace(item.Text())))
+		})
+	})
+
+	if len(results) == 0 {
+		results = append(results, "unknown")
+	}
 
 	return results
 }
