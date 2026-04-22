@@ -15,7 +15,7 @@ type Config struct {
 	CurrentID   int32  `json:"current_id"`
 }
 
-type State struct {
+type Frags struct {
 	DB     *database.Queries
 	LastID int32
 }

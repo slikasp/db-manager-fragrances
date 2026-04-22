@@ -69,9 +69,9 @@ func downloadCard(cardID int32) (database.AddCardParams, error) {
 // Populates DB even with non existing fragrances.
 //
 // TODO: try to make this faster
-func DownloadAllCards(state *config.State) error {
+func DownloadAllCards(frags *config.Frags) error {
 	startCardID := int32(1)
-	endCardID := state.LastID
+	endCardID := frags.LastID
 
 	for id := startCardID; id <= endCardID; id++ {
 		// Try downloading the card (existing or not)
@@ -82,12 +82,12 @@ func DownloadAllCards(state *config.State) error {
 		}
 
 		// Check if card already exists
-		_, err = state.DB.GetCard(context.Background(), id)
+		_, err = frags.DB.GetCard(context.Background(), id)
 		if err != nil {
 			// ID doesn't exist
 			if errors.Is(err, sql.ErrNoRows) {
 				// Add new card to the database
-				_, err = state.DB.AddCard(context.Background(), card)
+				_, err = frags.DB.AddCard(context.Background(), card)
 				if err != nil {
 					return fmt.Errorf("Adding card to database failed for ID %d: %w", id, err)
 				}
@@ -98,7 +98,7 @@ func DownloadAllCards(state *config.State) error {
 			}
 		} else {
 			// Update card if exists
-			_, err = state.DB.UpdateCard(context.Background(), database.UpdateCardParams{
+			_, err = frags.DB.UpdateCard(context.Background(), database.UpdateCardParams{
 				FragranticaID: card.FragranticaID,
 				Image:         card.Image,
 				HasCard:       card.HasCard,
@@ -113,8 +113,8 @@ func DownloadAllCards(state *config.State) error {
 }
 
 // Goes through all cards marked with HasCard == false and retries them
-func CheckMissingCards(state *config.State) error {
-	cardIDs, err := state.DB.GetMissingCardIDs(context.Background())
+func CheckMissingCards(frags *config.Frags) error {
+	cardIDs, err := frags.DB.GetMissingCardIDs(context.Background())
 	if err != nil {
 		return fmt.Errorf("Failed getting missing cards from database: %w", err)
 	}
@@ -130,7 +130,7 @@ func CheckMissingCards(state *config.State) error {
 				return fmt.Errorf("Card download failed for ID %d: %w", id, err)
 			} else {
 				// Card found -> update DB
-				_, err = state.DB.UpdateCard(context.Background(), database.UpdateCardParams{
+				_, err = frags.DB.UpdateCard(context.Background(), database.UpdateCardParams{
 					FragranticaID: card.FragranticaID,
 					Image:         card.Image,
 					HasCard:       card.HasCard,
@@ -159,8 +159,8 @@ func CheckMissingCards(state *config.State) error {
 
 // Need to remove all cards from the database that have no card after last ID with a card
 // Then run this, because it will create card entries in DB whether they are available or not
-func FindNewCards(state *config.State, cardsToCheck int) error {
-	id, err := state.DB.GetLastCardID(context.Background())
+func FindNewCards(frags *config.Frags, cardsToCheck int) error {
+	id, err := frags.DB.GetLastCardID(context.Background())
 	if err != nil {
 		return fmt.Errorf("Failed getting last card ID from database: %w", err)
 	}
@@ -186,11 +186,11 @@ func FindNewCards(state *config.State, cardsToCheck int) error {
 			}
 
 			// If found, no errors -> Check if card already exists
-			_, err = state.DB.GetCard(context.Background(), currentID)
+			_, err = frags.DB.GetCard(context.Background(), currentID)
 			if err != nil {
 				// doesn't exist -> Add new card to the database
 				if errors.Is(err, sql.ErrNoRows) {
-					_, err = state.DB.AddCard(context.Background(), card)
+					_, err = frags.DB.AddCard(context.Background(), card)
 					if err != nil {
 						return fmt.Errorf("Adding card to database failed for ID %d: %w", currentID, err)
 					}
@@ -201,7 +201,7 @@ func FindNewCards(state *config.State, cardsToCheck int) error {
 				}
 			} else {
 				// Update card if it exists in the database, card might have appeared (and we just downloaded it)
-				_, err = state.DB.UpdateCard(context.Background(), database.UpdateCardParams{
+				_, err = frags.DB.UpdateCard(context.Background(), database.UpdateCardParams{
 					FragranticaID: card.FragranticaID,
 					Image:         card.Image,
 					HasCard:       card.HasCard,

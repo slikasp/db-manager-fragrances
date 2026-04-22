@@ -1,4 +1,4 @@
-package main
+package fragrantica
 
 import (
 	"fmt"
@@ -16,9 +16,8 @@ type Scraper struct {
 	headers http.Header
 }
 
-type Fragrance struct {
-	ID            int64
-	Url           string
+type FragranceParams struct {
+	FragranticaID int32
 	Name          string
 	Brand         string
 	Country       string
@@ -36,7 +35,6 @@ type Fragrance struct {
 	Accord3       string
 	Accord4       string
 	Accord5       string
-	FragranticaID int32
 }
 
 // HTTP client that looks like a real browser to avoid being blocked
@@ -122,15 +120,23 @@ func (s *Scraper) GetPageBody(url string) (*goquery.Document, error) {
 }
 
 // Get details of newly found fragrance by parsing html page
-// TODO: try using ML and get the details from the cards...
-func ParsePage(doc *goquery.Document) {
+// TODO: explore the option of using ML to get the details from the cards...
+func ParsePage(url string) (FragranceParams, error) {
+	params := FragranceParams{}
 
-	// ID - from DB
-	// URL - from DB
+	scraper, err := NewScraper()
+	if err != nil {
+		return params, fmt.Errorf("Failed creating scraper: %s", err)
+	}
 
-	// Name - from URL
-	// Brand - from URL
-	// FragranticaID - from URL
+	doc, err := scraper.GetPageBody(url)
+	if err != nil {
+		return params, fmt.Errorf("Read body failed: %s", err)
+	}
+
+	if doc == nil {
+		return params, fmt.Errorf("Empty response body")
+	}
 
 	// Country - open brand page and look there
 	// #app > main > div > div.col-span-12.sm\:col-span-9.lg\:col-span-9.lg\:pl-1.lg\:mt-1 > div.bg-white.dark\:bg-zinc-900.dark\:text-zinc-100.p-2.md\:p-4.pb-20.rounded-md.relative > div.grid.grid-cols-2.gap-4.md\:gap-6.md\:mb-2 > div.text-center > p > a
@@ -179,7 +185,7 @@ func ParsePage(doc *goquery.Document) {
 	// Accord4
 	// Accord5
 	// accords := getAccords(doc)
-
+	return params, nil
 }
 
 func getAccords(doc *goquery.Document) []string {

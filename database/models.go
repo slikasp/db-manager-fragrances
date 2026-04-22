@@ -40,3 +40,8 @@ type Fragrance struct {
 	FragranticaID int32
 	Updated       time.Time
 }
+
+type Perfumer struct {
+	Name    string
+	Country string
+}

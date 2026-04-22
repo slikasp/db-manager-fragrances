@@ -13,7 +13,7 @@ import (
 	"github.com/slikasp/dbmanfrags/fragrances"
 )
 
-func setup() (*config.State, error) {
+func setup() (*config.Frags, error) {
 	// Read config
 	cfg, err := config.Read()
 	if err != nil {
@@ -28,17 +28,17 @@ func setup() (*config.State, error) {
 	dbQueries := database.New(dbtx)
 
 	// Create database struct to be passed to functions
-	state := &config.State{
+	frags := &config.Frags{
 		DB: dbQueries,
 	}
 
 	// Set ID of last card from the database
-	state.LastID, err = state.DB.GetLastCardID(context.Background())
+	frags.LastID, err = frags.DB.GetLastCardID(context.Background())
 	if err != nil {
 		return nil, err
 	}
 
-	return state, nil
+	return frags, nil
 }
 
 func main() {
@@ -52,7 +52,7 @@ func main() {
 	defer logFile.Close()
 
 	// Setup
-	stt, err := setup()
+	frags, err := setup()
 	if err != nil {
 		log.Fatalf("Error reading config: %v", err)
 	}
@@ -80,7 +80,7 @@ func main() {
 	// 300 - a safe option, takes less than 2 minutes if none are found
 	log.Println("-Looking for new cards-")
 	fmt.Println("-Looking for new cards-")
-	err = cards.FindNewCards(stt, 300)
+	err = cards.FindNewCards(frags, 300)
 	if err != nil {
 		log.Fatalf("Failed finding new cards: %v", err)
 	}
@@ -88,7 +88,7 @@ func main() {
 	// Go through newly found cards, try decoding them and add new fragrance entries
 	log.Println("-Adding missing fragrances-")
 	fmt.Println("-Adding missing fragrances-")
-	err = fragrances.AddMissingFragrances(stt)
+	err = fragrances.AddMissingFragrances(frags)
 	if err != nil {
 		log.Fatalf("Failed adding new fragrances: %v", err)
 	}

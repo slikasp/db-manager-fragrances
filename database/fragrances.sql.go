@@ -76,3 +76,84 @@ func (q *Queries) GetFragranceLink(ctx context.Context, fragranticaID int32) (sq
 	err := row.Scan(&url)
 	return url, err
 }
+
+const getFragrancesWithoutDetails = `-- name: GetFragrancesWithoutDetails :many
+SELECT fragrantica_id
+FROM fragrances
+WHERE name IS NULL
+`
+
+func (q *Queries) GetFragrancesWithoutDetails(ctx context.Context) ([]int32, error) {
+	rows, err := q.db.QueryContext(ctx, getFragrancesWithoutDetails)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var fragrantica_id int32
+		if err := rows.Scan(&fragrantica_id); err != nil {
+			return nil, err
+		}
+		items = append(items, fragrantica_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateFragrance = `-- name: UpdateFragrance :exec
+UPDATE fragrances 
+SET name = $2, brand = $3, country = $4, gender = $5, rating_value = $6, rating_count = $7, year = $8, top_notes = $9, middle_notes = $10, base_notes = $11, perfumer1 = $12, perfumer2 = $13, accord1 = $14, accord2 = $15, accord3 = $16, accord4 = $17, accord5 = $18, updated = NOW()
+WHERE fragrantica_id = $1
+RETURNING id, url, name, brand, country, gender, rating_value, rating_count, year, top_notes, middle_notes, base_notes, perfumer1, perfumer2, accord1, accord2, accord3, accord4, accord5, fragrantica_id, updated
+`
+
+type UpdateFragranceParams struct {
+	FragranticaID int32
+	Name          sql.NullString
+	Brand         sql.NullString
+	Country       sql.NullString
+	Gender        sql.NullString
+	RatingValue   sql.NullString
+	RatingCount   sql.NullInt32
+	Year          sql.NullInt32
+	TopNotes      sql.NullString
+	MiddleNotes   sql.NullString
+	BaseNotes     sql.NullString
+	Perfumer1     sql.NullString
+	Perfumer2     sql.NullString
+	Accord1       sql.NullString
+	Accord2       sql.NullString
+	Accord3       sql.NullString
+	Accord4       sql.NullString
+	Accord5       sql.NullString
+}
+
+func (q *Queries) UpdateFragrance(ctx context.Context, arg UpdateFragranceParams) error {
+	_, err := q.db.ExecContext(ctx, updateFragrance,
+		arg.FragranticaID,
+		arg.Name,
+		arg.Brand,
+		arg.Country,
+		arg.Gender,
+		arg.RatingValue,
+		arg.RatingCount,
+		arg.Year,
+		arg.TopNotes,
+		arg.MiddleNotes,
+		arg.BaseNotes,
+		arg.Perfumer1,
+		arg.Perfumer2,
+		arg.Accord1,
+		arg.Accord2,
+		arg.Accord3,
+		arg.Accord4,
+		arg.Accord5,
+	)
+	return err
+}
