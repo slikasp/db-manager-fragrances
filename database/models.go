@@ -39,6 +39,11 @@ type Fragrance struct {
 	Accord5       sql.NullString
 	FragranticaID int32
 	Updated       time.Time
+	Accord6       sql.NullString
+	Accord7       sql.NullString
+	Accord8       sql.NullString
+	Accord9       sql.NullString
+	Accord10      sql.NullString
 }
 
 type Perfumer struct {

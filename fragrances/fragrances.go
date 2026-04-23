@@ -126,8 +126,6 @@ func AddFragranceDetails(frags *config.Frags) error {
 		// FragranticaID - already in DB
 
 		// get and parse url for name and brand
-		// Name - from URL
-		// Brand - from URL
 		link, err := frags.DB.GetFragranceLink(context.Background(), id)
 		if err != nil {
 			return fmt.Errorf("Failed getting fragrance link for ID %d: %w", id, err)
@@ -140,11 +138,13 @@ func AddFragranceDetails(frags *config.Frags) error {
 			return fmt.Errorf("Failed parsing fragrance url '%s': %w", link.String, err)
 		}
 
-		// call ParsePage(url) for the rest
-		params, err := fragrantica.ParsePage(link.String)
-
+		// call ParsePage(url) for website parameters
+		params, err := fragrantica.ParsePageParams(link.String)
+		// add name and brand which we got from url
 		params.Name = name
 		params.Brand = brand
+		// add ID so sql finds the fragrance to update
+		params.FragranticaID = id
 
 		// update frag db
 		frags.DB.UpdateFragrance(context.Background(), dbInput(params))
@@ -181,25 +181,6 @@ func parseURL(link string) (name string, brand string, err error) {
 }
 
 func dbInput(params fragrantica.FragranceParams) database.UpdateFragranceParams {
-	nullString := func(s string) sql.NullString {
-		if s == "" {
-			return sql.NullString{}
-		}
-		return sql.NullString{
-			String: s,
-			Valid:  true,
-		}
-	}
-	nullInt32 := func(n int32) sql.NullInt32 {
-		if n == 0 {
-			return sql.NullInt32{}
-		}
-		return sql.NullInt32{
-			Int32: n,
-			Valid: true,
-		}
-	}
-
 	db := database.UpdateFragranceParams{}
 	db.FragranticaID = params.FragranticaID
 	db.Name = nullString(params.Name)
@@ -221,4 +202,24 @@ func dbInput(params fragrantica.FragranceParams) database.UpdateFragranceParams 
 	db.Accord5 = nullString(params.Accord5)
 
 	return db
+}
+
+func nullString(s string) sql.NullString {
+	if s == "" {
+		return sql.NullString{}
+	}
+	return sql.NullString{
+		String: s,
+		Valid:  true,
+	}
+}
+
+func nullInt32(n int32) sql.NullInt32 {
+	if n == 0 {
+		return sql.NullInt32{}
+	}
+	return sql.NullInt32{
+		Int32: n,
+		Valid: true,
+	}
 }

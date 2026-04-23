@@ -30,7 +30,7 @@ func (q *Queries) AddFragranceLink(ctx context.Context, arg AddFragranceLinkPara
 }
 
 const getFragrance = `-- name: GetFragrance :one
-SELECT id, url, name, brand, country, gender, rating_value, rating_count, year, top_notes, middle_notes, base_notes, perfumer1, perfumer2, accord1, accord2, accord3, accord4, accord5, fragrantica_id, updated 
+SELECT id, url, name, brand, country, gender, rating_value, rating_count, year, top_notes, middle_notes, base_notes, perfumer1, perfumer2, accord1, accord2, accord3, accord4, accord5, fragrantica_id, updated, accord6, accord7, accord8, accord9, accord10 
 FROM fragrances 
 WHERE fragrantica_id = $1
 `
@@ -60,6 +60,11 @@ func (q *Queries) GetFragrance(ctx context.Context, fragranticaID int32) (Fragra
 		&i.Accord5,
 		&i.FragranticaID,
 		&i.Updated,
+		&i.Accord6,
+		&i.Accord7,
+		&i.Accord8,
+		&i.Accord9,
+		&i.Accord10,
 	)
 	return i, err
 }
@@ -108,9 +113,9 @@ func (q *Queries) GetFragrancesWithoutDetails(ctx context.Context) ([]int32, err
 
 const updateFragrance = `-- name: UpdateFragrance :exec
 UPDATE fragrances 
-SET name = $2, brand = $3, country = $4, gender = $5, rating_value = $6, rating_count = $7, year = $8, top_notes = $9, middle_notes = $10, base_notes = $11, perfumer1 = $12, perfumer2 = $13, accord1 = $14, accord2 = $15, accord3 = $16, accord4 = $17, accord5 = $18, updated = NOW()
+SET name = $2, brand = $3, country = $4, gender = $5, rating_value = $6, rating_count = $7, year = $8, top_notes = $9, middle_notes = $10, base_notes = $11, perfumer1 = $12, perfumer2 = $13, accord1 = $14, accord2 = $15, accord3 = $16, accord4 = $17, accord5 = $18, accord6 = $19, accord7 = $20, accord8 = $21, accord9 = $22, accord10 = $23, updated = NOW()
 WHERE fragrantica_id = $1
-RETURNING id, url, name, brand, country, gender, rating_value, rating_count, year, top_notes, middle_notes, base_notes, perfumer1, perfumer2, accord1, accord2, accord3, accord4, accord5, fragrantica_id, updated
+RETURNING id, url, name, brand, country, gender, rating_value, rating_count, year, top_notes, middle_notes, base_notes, perfumer1, perfumer2, accord1, accord2, accord3, accord4, accord5, fragrantica_id, updated, accord6, accord7, accord8, accord9, accord10
 `
 
 type UpdateFragranceParams struct {
@@ -132,6 +137,11 @@ type UpdateFragranceParams struct {
 	Accord3       sql.NullString
 	Accord4       sql.NullString
 	Accord5       sql.NullString
+	Accord6       sql.NullString
+	Accord7       sql.NullString
+	Accord8       sql.NullString
+	Accord9       sql.NullString
+	Accord10      sql.NullString
 }
 
 func (q *Queries) UpdateFragrance(ctx context.Context, arg UpdateFragranceParams) error {
@@ -154,6 +164,11 @@ func (q *Queries) UpdateFragrance(ctx context.Context, arg UpdateFragranceParams
 		arg.Accord3,
 		arg.Accord4,
 		arg.Accord5,
+		arg.Accord6,
+		arg.Accord7,
+		arg.Accord8,
+		arg.Accord9,
+		arg.Accord10,
 	)
 	return err
 }
