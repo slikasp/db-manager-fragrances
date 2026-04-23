@@ -6,8 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/slikasp/dbmanfrags/cards"
 	"github.com/slikasp/dbmanfrags/config"
@@ -114,43 +116,69 @@ func AddMissingFragrances(frags *config.Frags) error {
 	return nil
 }
 
-func AddFragranceDetails(frags *config.Frags) error {
+func AddMissingDetails(frags *config.Frags) error {
+	// for testing only
+	// fragIDs := []int32{920}
+	// var err error
+
 	fragIDs, err := frags.DB.GetFragrancesWithoutDetails(context.Background())
 	if err != nil {
 		return fmt.Errorf("Failed getting IDs from database: %w", err)
 	}
 
+	numFrags := len(fragIDs)
+	log.Printf("Fragrances to update: %d", numFrags)
+
+	count := 0
 	for _, id := range fragIDs {
-		// ID - already in DB
-		// URL - already in DB
-		// FragranticaID - already in DB
-
-		// get and parse url for name and brand
-		link, err := frags.DB.GetFragranceLink(context.Background(), id)
+		count += 1
+		_, err = updateFragranceDetails(frags, id)
 		if err != nil {
-			return fmt.Errorf("Failed getting fragrance link for ID %d: %w", id, err)
+			return fmt.Errorf("Failed updating fragrance with ID %d: %w", id, err)
 		}
-		if !link.Valid {
-			return fmt.Errorf("Null url for ID %d", id)
-		}
-		name, brand, err := parseURL(link.String)
-		if err != nil {
-			return fmt.Errorf("Failed parsing fragrance url '%s': %w", link.String, err)
-		}
-
-		// call ParsePage(url) for website parameters
-		params, err := fragrantica.ParsePageParams(link.String)
-		// add name and brand which we got from url
-		params.Name = name
-		params.Brand = brand
-		// add ID so sql finds the fragrance to update
-		params.FragranticaID = id
-
-		// update frag db
-		frags.DB.UpdateFragrance(context.Background(), dbInput(params))
+		log.Printf("Updated fragrance with ID:%d (%d/%d)", id, count, numFrags)
+		// Too many requests with no delay
+		spamDelay(5, 10)
 	}
 	return nil
+}
 
+func updateFragranceDetails(frags *config.Frags, id int32) (fragrantica.FragranceParams, error) {
+	// ID - already in DB
+	// URL - already in DB
+
+	// get and parse url for name and brand
+	link, err := frags.DB.GetFragranceLink(context.Background(), id)
+	if err != nil {
+		return fragrantica.FragranceParams{}, fmt.Errorf("Failed getting fragrance link for ID %d: %w", id, err)
+	}
+	if !link.Valid {
+		return fragrantica.FragranceParams{}, fmt.Errorf("Null url for ID %d", id)
+	}
+	name, brand, err := parseURL(link.String)
+	if err != nil {
+		return fragrantica.FragranceParams{}, fmt.Errorf("Failed parsing fragrance url '%s': %w", link.String, err)
+	}
+
+	// call ParsePage(url) for website parameters
+	// this probably needs a delay to not be detected by fragrantica
+	params, err := fragrantica.ParsePageParams(link.String)
+	if err != nil {
+		return fragrantica.FragranceParams{}, fmt.Errorf("Failed parsing fragrance parameters '%s': %w", link.String, err)
+	}
+	// add name and brand which we got from url
+	params.Name = name
+	params.Brand = brand
+	// add ID so sql finds the fragrance to update
+	params.FragranticaID = id
+
+	// update frag db
+	err = frags.DB.UpdateFragrance(context.Background(), dbInput(params))
+	if err != nil {
+		return params, fmt.Errorf("Failed updating fragrance for ID %d: %w", id, err)
+	}
+
+	return params, nil
 }
 
 func parseURL(link string) (name string, brand string, err error) {
@@ -200,6 +228,11 @@ func dbInput(params fragrantica.FragranceParams) database.UpdateFragranceParams 
 	db.Accord3 = nullString(params.Accord3)
 	db.Accord4 = nullString(params.Accord4)
 	db.Accord5 = nullString(params.Accord5)
+	db.Accord6 = nullString(params.Accord6)
+	db.Accord7 = nullString(params.Accord7)
+	db.Accord8 = nullString(params.Accord8)
+	db.Accord9 = nullString(params.Accord9)
+	db.Accord10 = nullString(params.Accord10)
 
 	return db
 }
@@ -222,4 +255,14 @@ func nullInt32(n int32) sql.NullInt32 {
 		Int32: n,
 		Valid: true,
 	}
+}
+
+// Delay of n-m seconds
+func spamDelay(min, max int) {
+	diff := 1
+	if min < max {
+		diff = max - min
+	}
+	jitter := rand.Intn(diff)
+	time.Sleep(time.Duration(min+jitter) * 1000 * time.Millisecond)
 }

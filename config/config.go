@@ -1,6 +1,8 @@
 package config
 
 import (
+	"context"
+	"database/sql"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -18,6 +20,34 @@ type Config struct {
 type Frags struct {
 	DB     *database.Queries
 	LastID int32
+}
+
+func Setup() (*Frags, error) {
+	// Read config
+	cfg, err := Read()
+	if err != nil {
+		return nil, err
+	}
+
+	// Load the database
+	dbtx, err := sql.Open("postgres", cfg.RemoteDbURL)
+	if err != nil {
+		return nil, err
+	}
+	dbQueries := database.New(dbtx)
+
+	// Create database struct to be passed to functions
+	frags := &Frags{
+		DB: dbQueries,
+	}
+
+	// Set ID of last card from the database
+	frags.LastID, err = frags.DB.GetLastCardID(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	return frags, nil
 }
 
 func getConfigFilePath() (string, error) {

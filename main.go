@@ -1,45 +1,13 @@
 package main
 
 import (
-	"context"
-	"database/sql"
 	"fmt"
 	"log"
 
 	_ "github.com/lib/pq"
-	"github.com/slikasp/dbmanfrags/cards"
 	"github.com/slikasp/dbmanfrags/config"
-	"github.com/slikasp/dbmanfrags/database"
 	"github.com/slikasp/dbmanfrags/fragrances"
 )
-
-func setup() (*config.Frags, error) {
-	// Read config
-	cfg, err := config.Read()
-	if err != nil {
-		return nil, err
-	}
-
-	// Load the database
-	dbtx, err := sql.Open("postgres", cfg.RemoteDbURL)
-	if err != nil {
-		return nil, err
-	}
-	dbQueries := database.New(dbtx)
-
-	// Create database struct to be passed to functions
-	frags := &config.Frags{
-		DB: dbQueries,
-	}
-
-	// Set ID of last card from the database
-	frags.LastID, err = frags.DB.GetLastCardID(context.Background())
-	if err != nil {
-		return nil, err
-	}
-
-	return frags, nil
-}
 
 func main() {
 	log.Println("---Application started---")
@@ -52,7 +20,7 @@ func main() {
 	defer logFile.Close()
 
 	// Setup
-	frags, err := setup()
+	frags, err := config.Setup()
 	if err != nil {
 		log.Fatalf("Error reading config: %v", err)
 	}
@@ -80,20 +48,26 @@ func main() {
 	// 300 - a safe option, takes less than 2 minutes if none are found
 	log.Println("-Looking for new cards-")
 	fmt.Println("-Looking for new cards-")
-	err = cards.FindNewCards(frags, 300)
-	if err != nil {
-		log.Fatalf("Failed finding new cards: %v", err)
-	}
+	// err = cards.FindNewCards(frags, 300)
+	// if err != nil {
+	// 	log.Fatalf("Failed finding new cards: %v", err)
+	// }
 
 	// Go through newly found cards, try decoding them and add new fragrance entries
 	log.Println("-Adding missing fragrances-")
 	fmt.Println("-Adding missing fragrances-")
-	err = fragrances.AddMissingFragrances(frags)
-	if err != nil {
-		log.Fatalf("Failed adding new fragrances: %v", err)
-	}
+	// err = fragrances.AddMissingFragrances(frags)
+	// if err != nil {
+	// 	log.Fatalf("Failed adding new fragrances: %v", err)
+	// }
 
 	// Go through new fragrances (which field to check?) and find relevant data in the html
+	log.Println("-Adding missing details-")
+	fmt.Println("-Adding missing details-")
+	err = fragrances.AddMissingDetails(frags)
+	if err != nil {
+		log.Fatalf("Failed adding details: %v", err)
+	}
 
 	// Go through all existing fragrances and check if it needs updating? maybe check the user score
 

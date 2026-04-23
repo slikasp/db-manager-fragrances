@@ -46,5 +46,4 @@ func TestDbInputMissingValues(t *testing.T) {
 	if expectedDbParams != dbParams {
 		t.Errorf("Expected: %v\nGot %v", expectedDbParams, dbParams)
 	}
-
 }

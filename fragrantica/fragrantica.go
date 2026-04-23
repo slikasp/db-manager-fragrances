@@ -145,7 +145,7 @@ func GetCountry(perfumer string) (string, error) {
 
 	var results []string
 
-	doc.Find("div col-span-8.col-start-5.md\\:col-span-full").Find("a").Each(func(i int, item *goquery.Selection) {
+	doc.Find("main div.col-span-8.col-start-5.md\\:col-span-full").Find("a").Each(func(i int, item *goquery.Selection) {
 		results = append(results, strings.TrimSpace(item.Text()))
 	})
 
