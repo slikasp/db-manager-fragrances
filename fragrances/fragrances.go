@@ -129,21 +129,26 @@ func AddMissingDetails(frags *config.Frags) error {
 	numFrags := len(fragIDs)
 	log.Printf("Fragrances to update: %d", numFrags)
 
+	scraper, err := fragrantica.NewScraper()
+	if err != nil {
+		return fmt.Errorf("Failed creating scraper: %s", err)
+	}
+
 	count := 0
 	for _, id := range fragIDs {
 		count += 1
-		_, err = updateFragranceDetails(frags, id)
+		_, err = updateFragranceDetails(frags, scraper, id)
 		if err != nil {
 			return fmt.Errorf("Failed updating fragrance with ID %d: %w", id, err)
 		}
 		log.Printf("Updated fragrance with ID:%d (%d/%d)", id, count, numFrags)
-		// Too many requests with no delay
+		// TODO: figure out the delay to not get locked out
 		spamDelay(5, 10)
 	}
 	return nil
 }
 
-func updateFragranceDetails(frags *config.Frags, id int32) (fragrantica.FragranceParams, error) {
+func updateFragranceDetails(frags *config.Frags, scrapper *fragrantica.Scraper, id int32) (fragrantica.FragranceParams, error) {
 	// ID - already in DB
 	// URL - already in DB
 
@@ -162,13 +167,23 @@ func updateFragranceDetails(frags *config.Frags, id int32) (fragrantica.Fragranc
 
 	// call ParsePage(url) for website parameters
 	// this probably needs a delay to not be detected by fragrantica
-	params, err := fragrantica.ParsePageParams(link.String)
+	params, err := scrapper.ParsePageParams(link.String)
 	if err != nil {
 		return fragrantica.FragranceParams{}, fmt.Errorf("Failed parsing fragrance parameters '%s': %w", link.String, err)
 	}
 	// add name and brand which we got from url
 	params.Name = name
 	params.Brand = brand
+	// try getting existing country from database (works on existing entries)
+	// TODO: replace this with perfumers table lookup when that is populated
+	country, err := frags.DB.GetFragranceCountry(context.Background(), id)
+	if err != nil {
+		return fragrantica.FragranceParams{}, fmt.Errorf("Failed getting fragrance country for ID %d: %w", id, err)
+	}
+	if country.Valid {
+		params.Country = country.String
+	}
+
 	// add ID so sql finds the fragrance to update
 	params.FragranticaID = id
 

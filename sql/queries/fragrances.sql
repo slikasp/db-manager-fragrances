@@ -8,6 +8,11 @@ SELECT url
 FROM fragrances
 WHERE fragrantica_id = $1;
 
+-- name: GetFragranceCountry :one
+SELECT country
+FROM fragrances
+WHERE fragrantica_id = $1;
+
 -- name: GetFragrancesWithoutDetails :many
 SELECT fragrantica_id
 FROM fragrances

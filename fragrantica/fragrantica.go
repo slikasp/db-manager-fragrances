@@ -126,15 +126,10 @@ func (s *Scraper) GetPageBody(url string) (*goquery.Document, error) {
 	return doc, nil
 }
 
-func GetCountry(perfumer string) (string, error) {
+func (s *Scraper) GetCountry(perfumer string) (string, error) {
 	url := fmt.Sprintf("https://www.fragrantica.com/designers/%s.html", perfumer)
 
-	scraper, err := NewScraper()
-	if err != nil {
-		return "", fmt.Errorf("Failed creating scraper: %s", err)
-	}
-
-	doc, err := scraper.GetPageBody(url)
+	doc, err := s.GetPageBody(url)
 	if err != nil {
 		return "", fmt.Errorf("Read body failed: %s", err)
 	}
@@ -158,15 +153,10 @@ func GetCountry(perfumer string) (string, error) {
 
 // Get details of newly found fragrance by parsing html page
 // TODO: explore the option of using ML to get the details from the cards...
-func ParsePageParams(url string) (FragranceParams, error) {
+func (s *Scraper) ParsePageParams(url string) (FragranceParams, error) {
 	params := FragranceParams{}
 
-	scraper, err := NewScraper()
-	if err != nil {
-		return params, fmt.Errorf("Failed creating scraper: %s", err)
-	}
-
-	doc, err := scraper.GetPageBody(url)
+	doc, err := s.GetPageBody(url)
 	if err != nil {
 		return params, fmt.Errorf("Read body failed: %s", err)
 	}

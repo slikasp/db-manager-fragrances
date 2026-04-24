@@ -69,6 +69,19 @@ func (q *Queries) GetFragrance(ctx context.Context, fragranticaID int32) (Fragra
 	return i, err
 }
 
+const getFragranceCountry = `-- name: GetFragranceCountry :one
+SELECT country
+FROM fragrances
+WHERE fragrantica_id = $1
+`
+
+func (q *Queries) GetFragranceCountry(ctx context.Context, fragranticaID int32) (sql.NullString, error) {
+	row := q.db.QueryRowContext(ctx, getFragranceCountry, fragranticaID)
+	var country sql.NullString
+	err := row.Scan(&country)
+	return country, err
+}
+
 const getFragranceLink = `-- name: GetFragranceLink :one
 SELECT url
 FROM fragrances
