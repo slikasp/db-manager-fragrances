@@ -5,6 +5,7 @@ import (
 	"log"
 
 	_ "github.com/lib/pq"
+	// "github.com/slikasp/dbmanfrags/cards"
 	"github.com/slikasp/dbmanfrags/config"
 	"github.com/slikasp/dbmanfrags/fragrances"
 )
@@ -36,7 +37,7 @@ func main() {
 	// TODO: make this run in parallel to everything else and remove loggin to file
 	log.Println("-Checking missing cards-")
 	fmt.Println("-Checking missing cards-")
-	// err = cards.CheckMissingCards(stt)
+	// err = cards.CheckMissingCards(frags)
 	// if err != nil {
 	// 	log.Fatalf("Failed getting new cards: %v", err)
 	// }

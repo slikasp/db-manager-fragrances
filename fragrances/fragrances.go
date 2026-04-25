@@ -143,7 +143,7 @@ func AddMissingDetails(frags *config.Frags) error {
 		}
 		log.Printf("Updated fragrance with ID:%d (%d/%d)", id, count, numFrags)
 		// TODO: figure out the delay to not get locked out
-		spamDelay(5, 10)
+		spamDelay(100, 200)
 	}
 	return nil
 }
