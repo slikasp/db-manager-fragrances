@@ -65,9 +65,17 @@ func main() {
 	// Go through new fragrances (which field to check?) and find relevant data in the html
 	log.Println("-Adding missing details-")
 	fmt.Println("-Adding missing details-")
-	err = fragrances.AddMissingDetails(frags)
+	// err = fragrances.AddMissingDetails(frags)
+	// if err != nil {
+	// 	log.Fatalf("Failed adding details: %v", err)
+	// }
+
+	// Go through all fragrances and get a list of unique brand names
+	log.Println("-Updating perfumers-")
+	fmt.Println("-Updating perfumers-")
+	err = fragrances.UpdatePerfumers(frags)
 	if err != nil {
-		log.Fatalf("Failed adding details: %v", err)
+		log.Fatalf("Failed updating perfumers: %v", err)
 	}
 
 	// Go through all existing fragrances and check if it needs updating? maybe check the user score

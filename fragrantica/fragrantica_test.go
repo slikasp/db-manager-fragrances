@@ -91,7 +91,7 @@ func TestReadAndParse(t *testing.T) {
 	// }
 }
 
-func TestGetCountry(t *testing.T) {
+func TestGetPerfumerCountry(t *testing.T) {
 	amouage := "amouage"
 
 	expectedCountry := "Oman"
@@ -101,7 +101,7 @@ func TestGetCountry(t *testing.T) {
 		t.Errorf("Failed creating scraper: %s", err)
 	}
 
-	country, err := scraper.GetCountry(amouage)
+	country, err := scraper.GetPerfumerCountry(amouage)
 	if err != nil {
 		t.Errorf("Failed getting country: %s", err)
 	}

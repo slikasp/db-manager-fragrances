@@ -142,8 +142,54 @@ func AddMissingDetails(frags *config.Frags) error {
 			return fmt.Errorf("Failed updating fragrance with ID %d: %w", id, err)
 		}
 		log.Printf("Updated fragrance with ID:%d (%d/%d)", id, count, numFrags)
-		// TODO: figure out the delay to not get locked out
-		spamDelay(100, 200)
+		// to finish ~60k items this year, we should need to query ~25 pages per hour for 12h
+		// limit to not overload fragrantica
+		if count >= 25 {
+			return nil
+		}
+		spamDelay(5, 10)
+	}
+	return nil
+}
+
+func UpdatePerfumers(frags *config.Frags) error {
+
+	perfumers, err := frags.DB.GetMissingPerfumers(context.Background())
+	if err != nil {
+		return fmt.Errorf("Failed getting perfumer names from database: %w", err)
+	}
+
+	numPerfumers := len(perfumers)
+	log.Printf("Perfumers to update: %d", numPerfumers)
+
+	scraper, err := fragrantica.NewScraper()
+	if err != nil {
+		return fmt.Errorf("Failed creating scraper: %s", err)
+	}
+
+	count := 0
+	for _, brand := range perfumers {
+		count += 1
+		if brand.Valid {
+			country, err := scraper.GetPerfumerCountry(brand.String)
+			if err != nil {
+				return fmt.Errorf("Failed getting country of perfumer %s", brand.String)
+			}
+			params := database.AddPerfumerParams{
+				Name:    brand.String,
+				Country: country,
+			}
+			_, err = frags.DB.AddPerfumer(context.Background(), params)
+			if err != nil {
+				return fmt.Errorf("Failed adding perfumer to database %s", brand.String)
+			}
+			log.Printf("Updated perfumer:%s (%d/%d)", brand.String, count, numPerfumers)
+		}
+		// limit to not overload fragrantica
+		if count >= 25 {
+			return nil
+		}
+		spamDelay(5, 10)
 	}
 	return nil
 }
