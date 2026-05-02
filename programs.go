@@ -21,8 +21,8 @@ func ManualDbUpdate(frags *config.Frags) {
 func ScraperService(frags *config.Frags, maxRequests int) {
 	c := cron.New()
 
-	c.AddFunc("30 8-23 * * *", func() {
-		updatePerfumers(frags, maxRequests)
+	c.AddFunc("00 8-23 * * *", func() {
+		addMissingDetails(frags, maxRequests)
 	})
 
 	c.Start()
@@ -87,11 +87,11 @@ func addMissingDetails(frags *config.Frags, numRequests int) {
 	fmt.Println("-Adding missing details-")
 
 	// delay the start of the program 1-5 minutes
-	fragrances.SpamDelay(60, 300)
+	// fragrances.SpamDelay(60, 300)
 
 	err := fragrances.UpdateFragrances(frags, numRequests)
 	if err != nil {
-		log.Fatalf("Failed adding details: %v", err)
+		log.Fatalf("UpdateFragrances: %v", err)
 	}
 
 	log.Println("< Adding missing details - end <")

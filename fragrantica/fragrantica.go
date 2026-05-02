@@ -145,7 +145,7 @@ func (s *Scraper) GetPerfumerCountry(perfumer string) (string, error) {
 	})
 
 	if len(results) == 0 {
-		return "", fmt.Errorf("No perfumer details found for: %s", perfumer)
+		return "", fmt.Errorf("No perfumer details in %s", url)
 	}
 
 	return results[0], nil

@@ -151,7 +151,7 @@ func UpdateFragrances(frags *config.Frags, numRequests int) error {
 		// }
 		_, err = updateFragranceDetails(frags, scraper, id)
 		if err != nil {
-			return err
+			return fmt.Errorf("Failed getting details for ID %d: %w", id, err)
 		}
 		log.Printf("Updated fragrance with ID:%d (%d/%d)", id, count, numFrags)
 		// to finish ~60k items this year, we should need to query ~25 pages per hour for 12h
@@ -202,8 +202,11 @@ func UpdatePerfumers(frags *config.Frags, numRequests int) error {
 
 func addPerfumer(frags *config.Frags, scraper *fragrantica.Scraper, brand string) (string, error) {
 	country, err := scraper.GetPerfumerCountry(brand)
+	// TODO: add more detailed error handling
 	if err != nil {
-		return "", fmt.Errorf("Failed getting country of perfumer %s", brand)
+		log.Printf("No country for perfumer '%s', added as 'unknown'", brand)
+		country = "unknown"
+		// return "", fmt.Errorf("Failed getting country of perfumer %s: %w", brand, err)
 	}
 	params := database.AddPerfumerParams{
 		Name:    brand,
@@ -211,7 +214,7 @@ func addPerfumer(frags *config.Frags, scraper *fragrantica.Scraper, brand string
 	}
 	perfumer, err := frags.DB.AddPerfumer(context.Background(), params)
 	if err != nil {
-		return "", fmt.Errorf("Failed adding perfumer to database %s", brand)
+		return "", fmt.Errorf("Failed adding entry to database %s, %w", brand, err)
 	}
 
 	return perfumer.Country, nil
@@ -247,17 +250,19 @@ func updateFragranceDetails(frags *config.Frags, scraper *fragrantica.Scraper, i
 
 	// get country from perfumers table
 	country, err := frags.DB.GetPerfumerCountry(context.Background(), brand)
-	if errors.Is(err, sql.ErrNoRows) {
-		// ID doesn't exist - get perfumer from the web - this makes one additional request (expecting it to be <1 on average per run)
-		log.Printf("No entry for brand %s: %v", brand, err)
-		country, err = addPerfumer(frags, scraper, brand)
-		if err != nil {
-			return fragrantica.FragranceParams{}, fmt.Errorf("Failed adding perfumer '%s': %w", brand, err)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			// ID doesn't exist - get perfumer from the web - this makes one additional request (expecting it to be <1 on average per run)
+			log.Printf("No entry for brand: %s", brand)
+			country, err = addPerfumer(frags, scraper, brand)
+			if err != nil {
+				return fragrantica.FragranceParams{}, fmt.Errorf("Failed adding perfumer '%s': %w", brand, err)
+			}
+			log.Printf("Added new perfumer: %s", brand)
+		} else {
+			// Real error
+			return fragrantica.FragranceParams{}, fmt.Errorf("Failed getting fragrance country for ID %d:%s: %w", id, brand, err)
 		}
-		log.Printf("Added new perfumer: %s", brand)
-	} else {
-		// Real error
-		return fragrantica.FragranceParams{}, fmt.Errorf("Failed getting fragrance country for ID %d: %w", id, err)
 	}
 	params.Country = country
 
@@ -367,6 +372,6 @@ func SpamDelay(min, max int) {
 		diff = max - min
 	}
 	t := min + rand.Intn(diff)
-	log.Printf("-wait %ds", t)
+	// log.Printf("-wait %ds", t)
 	time.Sleep(time.Duration(t) * time.Second)
 }
