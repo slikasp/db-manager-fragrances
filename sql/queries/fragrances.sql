@@ -8,22 +8,23 @@ SELECT url
 FROM fragrances
 WHERE fragrantica_id = $1;
 
--- name: GetFragranceCountry :one
-SELECT country
-FROM fragrances
-WHERE fragrantica_id = $1;
-
 -- name: GetFragrancesWithoutDetails :many
 SELECT fragrantica_id
 FROM fragrances
 WHERE name IS NULL;
+
+-- name: GetFragrancesToUpdate :many
+SELECT fragrantica_id
+FROM fragrances
+ORDER BY updated ASC
+LIMIT $1;
 
 -- name: AddFragranceLink :exec
 INSERT INTO fragrances (fragrantica_id, url, updated)
 VALUES (
     $1,
     $2,
-    NOW()
+    TIMESTAMP '2024-01-01 00:00:00'
 );
 
 -- name: UpdateFragrance :exec

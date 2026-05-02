@@ -67,8 +67,6 @@ func downloadCard(cardID int32) (database.AddCardParams, error) {
 // Only use this for a fresh database because it will redownload all exisiting cards too.
 // Might be used to force update and find new cards that weren't there before.
 // Populates DB even with non existing fragrances.
-//
-// TODO: try to make this faster
 func DownloadAllCards(frags *config.Frags) error {
 	startCardID := int32(1)
 	endCardID := frags.LastID
@@ -125,8 +123,9 @@ func CheckMissingCards(frags *config.Frags) error {
 	for _, id := range cardIDs {
 		card, err := downloadCard(id)
 		if card.HasCard {
-			// Card found, but not downloaded -> return download error
+			// Card found
 			if err != nil {
+				// but not downloaded -> return download error
 				return fmt.Errorf("Card download failed for ID %d: %w", id, err)
 			} else {
 				// Card found -> update DB
@@ -141,7 +140,7 @@ func CheckMissingCards(frags *config.Frags) error {
 				cardsAdded += 1
 				log.Printf("New card added, ID:%d, URL:%s", id, card.Image)
 			}
-		} else {
+			// } else {
 			// TODO: create a custom error type for card downloads and log only actual errors
 			// these are 100% no card found so far
 			// Log error (most likely card not found + ID)
@@ -152,6 +151,30 @@ func CheckMissingCards(frags *config.Frags) error {
 	}
 
 	log.Printf("New cards added: %d / %d", cardsAdded, len(cardIDs))
+	return nil
+}
+
+// Redownloads a card (to be used as part of fragrance update)
+func RedownloadCard(frags *config.Frags, id int32) error {
+	card, err := downloadCard(id)
+	if card.HasCard {
+		// card found
+		if err != nil {
+			// but not downloaded -> return download error
+			return fmt.Errorf("Card download failed for ID %d: %w", id, err)
+		} else {
+			// Card found -> update DB
+			_, err = frags.DB.UpdateCard(context.Background(), database.UpdateCardParams{
+				FragranticaID: card.FragranticaID,
+				Image:         card.Image,
+				HasCard:       card.HasCard,
+			})
+			if err != nil {
+				return fmt.Errorf("Could not update card with ID %d: %w", id, err)
+			}
+			// log.Printf("Card updated, ID:%d, URL:%s", id, card.Image)
+		}
+	}
 	return nil
 }
 

@@ -18,7 +18,7 @@ func TestConfig(t *testing.T) {
 
 	err = Write(cfg1)
 	if err != nil {
-		t.Errorf("Failer to write config: %v", err)
+		t.Errorf("Failed to write config: %v", err)
 	}
 
 	cfg2, err := Read()

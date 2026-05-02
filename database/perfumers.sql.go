@@ -34,7 +34,6 @@ const getPerfumerCountry = `-- name: GetPerfumerCountry :one
 SELECT country
 FROM perfumers
 WHERE name = $1
-LIMIT 1
 `
 
 func (q *Queries) GetPerfumerCountry(ctx context.Context, name string) (string, error) {

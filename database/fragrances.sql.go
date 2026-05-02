@@ -15,7 +15,7 @@ INSERT INTO fragrances (fragrantica_id, url, updated)
 VALUES (
     $1,
     $2,
-    NOW()
+    TIMESTAMP '2024-01-01 00:00:00'
 )
 `
 
@@ -69,19 +69,6 @@ func (q *Queries) GetFragrance(ctx context.Context, fragranticaID int32) (Fragra
 	return i, err
 }
 
-const getFragranceCountry = `-- name: GetFragranceCountry :one
-SELECT country
-FROM fragrances
-WHERE fragrantica_id = $1
-`
-
-func (q *Queries) GetFragranceCountry(ctx context.Context, fragranticaID int32) (sql.NullString, error) {
-	row := q.db.QueryRowContext(ctx, getFragranceCountry, fragranticaID)
-	var country sql.NullString
-	err := row.Scan(&country)
-	return country, err
-}
-
 const getFragranceLink = `-- name: GetFragranceLink :one
 SELECT url
 FROM fragrances
@@ -93,6 +80,36 @@ func (q *Queries) GetFragranceLink(ctx context.Context, fragranticaID int32) (sq
 	var url sql.NullString
 	err := row.Scan(&url)
 	return url, err
+}
+
+const getFragrancesToUpdate = `-- name: GetFragrancesToUpdate :many
+SELECT fragrantica_id
+FROM fragrances
+ORDER BY updated ASC
+LIMIT $1
+`
+
+func (q *Queries) GetFragrancesToUpdate(ctx context.Context, limit int32) ([]int32, error) {
+	rows, err := q.db.QueryContext(ctx, getFragrancesToUpdate, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int32
+	for rows.Next() {
+		var fragrantica_id int32
+		if err := rows.Scan(&fragrantica_id); err != nil {
+			return nil, err
+		}
+		items = append(items, fragrantica_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getFragrancesWithoutDetails = `-- name: GetFragrancesWithoutDetails :many

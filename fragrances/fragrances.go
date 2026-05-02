@@ -67,7 +67,7 @@ func CheckAllLinks(frags *config.Frags) error {
 	return nil
 }
 
-// Checks card that doesn't have a linked fragrance to it's ID
+// Checks cards that don't have linked fragrances to their IDs, adds fragrance row with no details if found
 func AddMissingFragrances(frags *config.Frags) error {
 	ids, err := frags.DB.GetMissingFragranceIDs(context.Background())
 	if err != nil {
@@ -116,18 +116,24 @@ func AddMissingFragrances(frags *config.Frags) error {
 	return nil
 }
 
-func AddMissingDetails(frags *config.Frags) error {
-	// for testing only
-	// fragIDs := []int32{920}
-	// var err error
-
+// Updates numRequests(+/- 5) number of fragrances
+// New (empty details) fragrances are on top of the list
+// Followed by those updated long time ago
+func UpdateFragrances(frags *config.Frags, numRequests int) error {
+	num := randomise(numRequests, 5)
+	// Gets a full list of fragrances that are missing details
 	fragIDs, err := frags.DB.GetFragrancesWithoutDetails(context.Background())
 	if err != nil {
 		return fmt.Errorf("Failed getting IDs from database: %w", err)
 	}
+	// Gets only a number of oldest fragrances to update
+	// fragIDs, err := frags.DB.GetFragrancesToUpdate(context.Background(), num)
+	// if err != nil {
+	// 	return fmt.Errorf("Failed getting IDs from database: %w", err)
+	// }
 
 	numFrags := len(fragIDs)
-	log.Printf("Fragrances to update: %d", numFrags)
+	log.Printf("Updating %d fragrances out of %d", num, numFrags)
 
 	scraper, err := fragrantica.NewScraper()
 	if err != nil {
@@ -137,30 +143,37 @@ func AddMissingDetails(frags *config.Frags) error {
 	count := 0
 	for _, id := range fragIDs {
 		count += 1
+
+		// Redownload the card
+		// err = cards.RedownloadCard(frags, id)
+		// if err != nil {
+		// 	return err
+		// }
 		_, err = updateFragranceDetails(frags, scraper, id)
 		if err != nil {
-			return fmt.Errorf("Failed updating fragrance with ID %d: %w", id, err)
+			return err
 		}
 		log.Printf("Updated fragrance with ID:%d (%d/%d)", id, count, numFrags)
 		// to finish ~60k items this year, we should need to query ~25 pages per hour for 12h
 		// limit to not overload fragrantica
-		if count >= 25 {
+		if count >= num {
 			return nil
 		}
-		spamDelay(5, 10)
+		SpamDelay(5, 10)
 	}
 	return nil
 }
 
-func UpdatePerfumers(frags *config.Frags) error {
-
+// List all unique brand names in fragrances table and check if al exist in perfumers table
+// If some are missing, get their country online
+func UpdatePerfumers(frags *config.Frags, numRequests int) error {
 	perfumers, err := frags.DB.GetMissingPerfumers(context.Background())
 	if err != nil {
 		return fmt.Errorf("Failed getting perfumer names from database: %w", err)
 	}
 
 	numPerfumers := len(perfumers)
-	log.Printf("Perfumers to update: %d", numPerfumers)
+	log.Printf("Missing perfumers: %d", numPerfumers)
 
 	scraper, err := fragrantica.NewScraper()
 	if err != nil {
@@ -171,30 +184,41 @@ func UpdatePerfumers(frags *config.Frags) error {
 	for _, brand := range perfumers {
 		count += 1
 		if brand.Valid {
-			country, err := scraper.GetPerfumerCountry(brand.String)
+			_, err = addPerfumer(frags, scraper, brand.String)
 			if err != nil {
-				return fmt.Errorf("Failed getting country of perfumer %s", brand.String)
+				return err
 			}
-			params := database.AddPerfumerParams{
-				Name:    brand.String,
-				Country: country,
-			}
-			_, err = frags.DB.AddPerfumer(context.Background(), params)
-			if err != nil {
-				return fmt.Errorf("Failed adding perfumer to database %s", brand.String)
-			}
-			log.Printf("Updated perfumer:%s (%d/%d)", brand.String, count, numPerfumers)
+			log.Printf("Added perfumer: %s (%d/%d)", brand.String, count, numPerfumers)
+
 		}
 		// limit to not overload fragrantica
-		if count >= 25 {
+		if count >= randomise(numRequests, 5) {
 			return nil
 		}
-		spamDelay(5, 10)
+		SpamDelay(5, 10)
 	}
 	return nil
 }
 
-func updateFragranceDetails(frags *config.Frags, scrapper *fragrantica.Scraper, id int32) (fragrantica.FragranceParams, error) {
+func addPerfumer(frags *config.Frags, scraper *fragrantica.Scraper, brand string) (string, error) {
+	country, err := scraper.GetPerfumerCountry(brand)
+	if err != nil {
+		return "", fmt.Errorf("Failed getting country of perfumer %s", brand)
+	}
+	params := database.AddPerfumerParams{
+		Name:    brand,
+		Country: country,
+	}
+	perfumer, err := frags.DB.AddPerfumer(context.Background(), params)
+	if err != nil {
+		return "", fmt.Errorf("Failed adding perfumer to database %s", brand)
+	}
+
+	return perfumer.Country, nil
+}
+
+// Get details of a single fragrance from the web and update it's record in database
+func updateFragranceDetails(frags *config.Frags, scraper *fragrantica.Scraper, id int32) (fragrantica.FragranceParams, error) {
 	// ID - already in DB
 	// URL - already in DB
 
@@ -212,23 +236,30 @@ func updateFragranceDetails(frags *config.Frags, scrapper *fragrantica.Scraper, 
 	}
 
 	// call ParsePage(url) for website parameters
-	// this probably needs a delay to not be detected by fragrantica
-	params, err := scrapper.ParsePageParams(link.String)
+	params, err := scraper.ParsePageParams(link.String)
 	if err != nil {
 		return fragrantica.FragranceParams{}, fmt.Errorf("Failed parsing fragrance parameters '%s': %w", link.String, err)
 	}
+
 	// add name and brand which we got from url
 	params.Name = name
 	params.Brand = brand
-	// try getting existing country from database (works on existing entries)
-	// TODO: replace this with perfumers table lookup when that is populated
-	country, err := frags.DB.GetFragranceCountry(context.Background(), id)
-	if err != nil {
+
+	// get country from perfumers table
+	country, err := frags.DB.GetPerfumerCountry(context.Background(), brand)
+	if errors.Is(err, sql.ErrNoRows) {
+		// ID doesn't exist - get perfumer from the web - this makes one additional request (expecting it to be <1 on average per run)
+		log.Printf("No entry for brand %s: %v", brand, err)
+		country, err = addPerfumer(frags, scraper, brand)
+		if err != nil {
+			return fragrantica.FragranceParams{}, fmt.Errorf("Failed adding perfumer '%s': %w", brand, err)
+		}
+		log.Printf("Added new perfumer: %s", brand)
+	} else {
+		// Real error
 		return fragrantica.FragranceParams{}, fmt.Errorf("Failed getting fragrance country for ID %d: %w", id, err)
 	}
-	if country.Valid {
-		params.Country = country.String
-	}
+	params.Country = country
 
 	// add ID so sql finds the fragrance to update
 	params.FragranticaID = id
@@ -269,6 +300,7 @@ func parseURL(link string) (name string, brand string, err error) {
 	return name, brand, nil
 }
 
+// Convert regular types to nullable types that DB accepts
 func dbInput(params fragrantica.FragranceParams) database.UpdateFragranceParams {
 	db := database.UpdateFragranceParams{}
 	db.FragranticaID = params.FragranticaID
@@ -318,12 +350,23 @@ func nullInt32(n int32) sql.NullInt32 {
 	}
 }
 
+// Randomise
+func randomise(num int, variance int) int {
+	r := rand.Intn(variance * 2)
+	min := num - variance
+	if min <= 0 {
+		min = 1
+	}
+	return min + r
+}
+
 // Delay of n-m seconds
-func spamDelay(min, max int) {
+func SpamDelay(min, max int) {
 	diff := 1
 	if min < max {
 		diff = max - min
 	}
-	jitter := rand.Intn(diff)
-	time.Sleep(time.Duration(min+jitter) * 1000 * time.Millisecond)
+	t := min + rand.Intn(diff)
+	log.Printf("-wait %ds", t)
+	time.Sleep(time.Duration(t) * time.Second)
 }
