@@ -11,7 +11,8 @@ WHERE fragrantica_id = $1;
 -- name: GetFragrancesWithoutDetails :many
 SELECT fragrantica_id
 FROM fragrances
-WHERE name IS NULL;
+WHERE name IS NULL
+LIMIT $1;
 
 -- name: GetFragrancesToUpdate :many
 SELECT fragrantica_id

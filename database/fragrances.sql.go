@@ -116,10 +116,11 @@ const getFragrancesWithoutDetails = `-- name: GetFragrancesWithoutDetails :many
 SELECT fragrantica_id
 FROM fragrances
 WHERE name IS NULL
+LIMIT $1
 `
 
-func (q *Queries) GetFragrancesWithoutDetails(ctx context.Context) ([]int32, error) {
-	rows, err := q.db.QueryContext(ctx, getFragrancesWithoutDetails)
+func (q *Queries) GetFragrancesWithoutDetails(ctx context.Context, limit int32) ([]int32, error) {
+	rows, err := q.db.QueryContext(ctx, getFragrancesWithoutDetails, limit)
 	if err != nil {
 		return nil, err
 	}

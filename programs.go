@@ -21,8 +21,21 @@ func ManualDbUpdate(frags *config.Frags) {
 func ScraperService(frags *config.Frags, maxRequests int) {
 	c := cron.New()
 
-	c.AddFunc("00 8-23 * * *", func() {
-		addMissingDetails(frags, maxRequests)
+	// this will run once a week to check if any missing cards were added
+	// c.AddFunc("0 0 * * 1", func() {
+	// 	checkMissingCards(frags)
+	// })
+
+	// this will once every morning to look for new fragrances
+	// c.AddFunc("0 7 * * *", func() {
+	// 	lookForNewCards(frags)
+	// 	addMissingFragrances(frags)
+	// })
+
+	// this will run every waking hour every day and keep updating maxRequests*16 fragrance items every day
+	c.AddFunc("30 8-23 * * *", func() {
+		fragrances.SpamDelay(60, 300)
+		updateFragranceDetails(frags, maxRequests)
 	})
 
 	c.Start()
@@ -82,12 +95,9 @@ func addMissingFragrances(frags *config.Frags) {
 }
 
 // Go through new fragrances, find relevant data and update them
-func addMissingDetails(frags *config.Frags, numRequests int) {
+func updateFragranceDetails(frags *config.Frags, numRequests int) {
 	log.Println("> Adding missing details - start >")
 	fmt.Println("-Adding missing details-")
-
-	// delay the start of the program 1-5 minutes
-	// fragrances.SpamDelay(60, 300)
 
 	err := fragrances.UpdateFragrances(frags, numRequests)
 	if err != nil {
@@ -102,9 +112,6 @@ func addMissingDetails(frags *config.Frags, numRequests int) {
 func updatePerfumers(frags *config.Frags, numRequests int) {
 	log.Println("> Updating perfumers - start >")
 	fmt.Println("-Updating perfumers-")
-
-	// delay the start of the program 1-5 minutes
-	fragrances.SpamDelay(60, 300)
 
 	err := fragrances.UpdatePerfumers(frags, numRequests)
 	if err != nil {

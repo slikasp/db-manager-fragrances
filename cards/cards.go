@@ -163,7 +163,7 @@ func RedownloadCard(frags *config.Frags, id int32) error {
 			// but not downloaded -> return download error
 			return fmt.Errorf("Card download failed for ID %d: %w", id, err)
 		} else {
-			// Card found -> update DB
+			// card found & downloaded -> update DB
 			_, err = frags.DB.UpdateCard(context.Background(), database.UpdateCardParams{
 				FragranticaID: card.FragranticaID,
 				Image:         card.Image,

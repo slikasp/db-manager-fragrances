@@ -120,20 +120,26 @@ func AddMissingFragrances(frags *config.Frags) error {
 // New (empty details) fragrances are on top of the list
 // Followed by those updated long time ago
 func UpdateFragrances(frags *config.Frags, numRequests int) error {
+	// add some variance to request number for more human appearance
 	num := randomise(numRequests, 5)
-	// Gets a full list of fragrances that are missing details
-	fragIDs, err := frags.DB.GetFragrancesWithoutDetails(context.Background())
+
+	// TODO: use both of the below results if first does not satisfy the numRequests count
+
+	// Gets a full list of fragrances that are missing details (newly added)
+	fragIDs, err := frags.DB.GetFragrancesWithoutDetails(context.Background(), int32(num))
 	if err != nil {
 		return fmt.Errorf("Failed getting IDs from database: %w", err)
 	}
 	// Gets only a number of oldest fragrances to update
+	// TODO: add checks for all fragrances being up to date
 	// fragIDs, err := frags.DB.GetFragrancesToUpdate(context.Background(), num)
 	// if err != nil {
 	// 	return fmt.Errorf("Failed getting IDs from database: %w", err)
 	// }
 
 	numFrags := len(fragIDs)
-	log.Printf("Updating %d fragrances out of %d", num, numFrags)
+	// TODO: also print the oldest 'updated' value?
+	log.Printf("Updating %d fragrances without details", numFrags)
 
 	scraper, err := fragrantica.NewScraper()
 	if err != nil {
@@ -145,6 +151,7 @@ func UpdateFragrances(frags *config.Frags, numRequests int) error {
 		count += 1
 
 		// Redownload the card
+		// TODO: add checks for cards that were just downloaded (new fragrances)
 		// err = cards.RedownloadCard(frags, id)
 		// if err != nil {
 		// 	return err
@@ -154,8 +161,7 @@ func UpdateFragrances(frags *config.Frags, numRequests int) error {
 			return fmt.Errorf("Failed getting details for ID %d: %w", id, err)
 		}
 		log.Printf("Updated fragrance with ID:%d (%d/%d)", id, count, numFrags)
-		// to finish ~60k items this year, we should need to query ~25 pages per hour for 12h
-		// limit to not overload fragrantica
+		// spread out requests to not overload web request limits
 		if count >= num {
 			return nil
 		}
