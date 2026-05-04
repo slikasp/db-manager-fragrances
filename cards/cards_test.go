@@ -40,3 +40,16 @@ func TestDownload(t *testing.T) {
 		t.Error("Card should not exist.")
 	}
 }
+
+func TestListCardFiles(t *testing.T) {
+	cards, err := listCardFiles()
+	if err != nil {
+		t.Errorf("Failed listing files: %v", err)
+	}
+
+	totalExpected := 5
+
+	if len(cards) != totalExpected {
+		t.Errorf("Wrong number of files:\nFound: %d\nExpected: %d", len(cards), totalExpected)
+	}
+}

@@ -65,6 +65,19 @@ func (q *Queries) GetCard(ctx context.Context, fragranticaID int32) (Card, error
 	return i, err
 }
 
+const getExistingCardCount = `-- name: GetExistingCardCount :one
+SELECT COUNT(*) AS match_count
+FROM cards
+WHERE has_card = 't'
+`
+
+func (q *Queries) GetExistingCardCount(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getExistingCardCount)
+	var match_count int64
+	err := row.Scan(&match_count)
+	return match_count, err
+}
+
 const getExistingCardIDs = `-- name: GetExistingCardIDs :many
 SELECT fragrantica_id
 FROM cards
@@ -108,6 +121,19 @@ func (q *Queries) GetLastCardID(ctx context.Context) (int32, error) {
 	var fragrantica_id int32
 	err := row.Scan(&fragrantica_id)
 	return fragrantica_id, err
+}
+
+const getMissingCardCount = `-- name: GetMissingCardCount :one
+SELECT COUNT(*) AS match_count
+FROM cards
+WHERE has_card = 'f'
+`
+
+func (q *Queries) GetMissingCardCount(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getMissingCardCount)
+	var match_count int64
+	err := row.Scan(&match_count)
+	return match_count, err
 }
 
 const getMissingCardIDs = `-- name: GetMissingCardIDs :many

@@ -9,6 +9,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/slikasp/dbmanfrags/config"
 	"github.com/slikasp/dbmanfrags/database"
@@ -66,7 +68,7 @@ func downloadCard(cardID int32) (database.AddCardParams, error) {
 
 // Only use this for a fresh database because it will redownload all exisiting cards too.
 // Might be used to force update and find new cards that weren't there before.
-// Populates DB even with non existing fragrances.
+// Populates DB even with non existing fragrance cards.
 func DownloadAllCards(frags *config.Frags) error {
 	startCardID := int32(1)
 	endCardID := frags.LastID
@@ -154,6 +156,97 @@ func CheckMissingCards(frags *config.Frags) error {
 	return nil
 }
 
+// Goes through all cards marked with HasCard == true and checks if they exist in local storage
+func CheckExistingCards(frags *config.Frags) error {
+	cardIDs, err := frags.DB.GetExistingCardIDs(context.Background())
+	if err != nil {
+		return fmt.Errorf("Failed getting existing cards from database: %w", err)
+	}
+
+	localCards, err := listCardFiles()
+
+	diff := listDiff(cardIDs, localCards)
+	if len(diff) > 0 {
+		log.Printf("Expected/found cards: %d/%d", len(cardIDs), len(localCards))
+
+		for _, id := range diff {
+			card, err := downloadCard(id)
+			if card.HasCard {
+				// Card found
+				if err != nil {
+					// but not downloaded -> return download error
+					return fmt.Errorf("Card download failed for ID %d: %w", id, err)
+				} else {
+					// Card found -> update DB
+					_, err = frags.DB.UpdateCard(context.Background(), database.UpdateCardParams{
+						FragranticaID: card.FragranticaID,
+						Image:         card.Image,
+						HasCard:       card.HasCard,
+					})
+					if err != nil {
+						return fmt.Errorf("Could not update card with ID %d: %w", id, err)
+					}
+					log.Printf("Card redownloaded: %s", makeFilePath(id))
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func listCardFiles() ([]int32, error) {
+	path := "cards/en/"
+	var ids []int32
+
+	files, err := os.ReadDir(path)
+	if err != nil {
+		return ids, err
+	}
+
+	for _, f := range files {
+		name := f.Name()
+
+		// Skip directories just in case
+		if f.IsDir() {
+			continue
+		}
+
+		// Expected format: p_c_<ID>.jpeg
+		if !strings.HasPrefix(name, "p_c_") || !strings.HasSuffix(name, ".jpeg") {
+			continue // skip unexpected files
+		}
+
+		idStr := strings.TrimPrefix(name, "p_c_")
+		idStr = strings.TrimSuffix(idStr, ".jpeg")
+
+		id, err := strconv.ParseInt(idStr, 10, 32)
+		if err != nil {
+			continue // skip invalid IDs
+		}
+
+		ids = append(ids, int32(id))
+	}
+
+	return ids, nil
+}
+
+func listDiff(a, b []int32) []int32 {
+	setB := make(map[int32]struct{}, len(b))
+	for _, id := range b {
+		setB[id] = struct{}{}
+	}
+
+	result := make([]int32, 0, len(a))
+	for _, id := range a {
+		if _, exists := setB[id]; !exists {
+			result = append(result, id)
+		}
+	}
+
+	return result
+}
+
 // Redownloads a card (to be used as part of fragrance update)
 func RedownloadCard(frags *config.Frags, id int32) error {
 	card, err := downloadCard(id)
@@ -172,7 +265,7 @@ func RedownloadCard(frags *config.Frags, id int32) error {
 			if err != nil {
 				return fmt.Errorf("Could not update card with ID %d: %w", id, err)
 			}
-			// log.Printf("Card updated, ID:%d, URL:%s", id, card.Image)
+			log.Printf("Card updated, ID:%d, URL:%s", id, card.Image)
 		}
 	}
 	return nil

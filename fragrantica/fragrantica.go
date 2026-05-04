@@ -126,8 +126,13 @@ func (s *Scraper) GetPageBody(url string) (*goquery.Document, error) {
 	return doc, nil
 }
 
-func (s *Scraper) GetPerfumerCountry(perfumer string) (string, error) {
+func makePerfumerURL(perfumer string) string {
 	url := fmt.Sprintf("https://www.fragrantica.com/designers/%s.html", perfumer)
+	return url
+}
+
+func (s *Scraper) GetPerfumerCountry(perfumer string) (string, error) {
+	url := makePerfumerURL(perfumer)
 
 	doc, err := s.GetPageBody(url)
 	if err != nil {

@@ -33,6 +33,16 @@ FROM cards
 WHERE has_card = 't'
 ORDER BY fragrantica_id ASC;
 
+-- name: GetMissingCardCount :one
+SELECT COUNT(*) AS match_count
+FROM cards
+WHERE has_card = 'f';
+
+-- name: GetExistingCardCount :one
+SELECT COUNT(*) AS match_count
+FROM cards
+WHERE has_card = 't';
+
 -- name: UpdateCard :one
 UPDATE cards 
 SET image = $2, has_card = $3, updated = NOW()

@@ -21,8 +21,9 @@ func ManualDbUpdate(frags *config.Frags) {
 func ScraperService(frags *config.Frags, maxRequests int) {
 	c := cron.New()
 
-	// this will run once a week to check if any missing cards were added
+	// this will run once a week to check if we have downloaded all cards listed in DB and if any missing cards were uploaded to the web
 	// c.AddFunc("0 0 * * 1", func() {
+	//	checkExistingCards(frags)
 	// 	checkMissingCards(frags)
 	// })
 
@@ -63,6 +64,18 @@ func checkMissingCards(frags *config.Frags) {
 		log.Fatalf("Failed getting new cards: %v", err)
 	}
 	log.Println("< Checking missing cards - end <")
+}
+
+func checkExistingCards(frags *config.Frags) {
+	// TODO: make this run in parallel to everything else and remove loggin to file
+	log.Println("> Checking downloaded cards - start >")
+	fmt.Println("-Checking downloaded cards-")
+
+	err := cards.CheckExistingCards(frags)
+	if err != nil {
+		log.Fatalf("Failed checking downloaded cards: %v", err)
+	}
+	log.Println("< Checking downloaded cards - end <")
 }
 
 // Go throug all IDs after the last found card and look for new cards

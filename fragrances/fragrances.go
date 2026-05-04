@@ -123,7 +123,7 @@ func UpdateFragrances(frags *config.Frags, numRequests int) error {
 	// add some variance to request number for more human appearance
 	num := randomise(numRequests, 5)
 
-	// TODO: use both of the below results if first does not satisfy the numRequests count
+	// TODO: switch to GetFragrancesToUpdate once the inital list is done
 
 	// Gets a full list of fragrances that are missing details (newly added)
 	fragIDs, err := frags.DB.GetFragrancesWithoutDetails(context.Background(), int32(num))
@@ -131,7 +131,6 @@ func UpdateFragrances(frags *config.Frags, numRequests int) error {
 		return fmt.Errorf("Failed getting IDs from database: %w", err)
 	}
 	// Gets only a number of oldest fragrances to update
-	// TODO: add checks for all fragrances being up to date
 	// fragIDs, err := frags.DB.GetFragrancesToUpdate(context.Background(), num)
 	// if err != nil {
 	// 	return fmt.Errorf("Failed getting IDs from database: %w", err)
@@ -150,12 +149,18 @@ func UpdateFragrances(frags *config.Frags, numRequests int) error {
 	for _, id := range fragIDs {
 		count += 1
 
-		// Redownload the card
-		// TODO: add checks for cards that were just downloaded (new fragrances)
-		// err = cards.RedownloadCard(frags, id)
+		// Redownload the card if it's outdated
+		// old, err := oldCard(frags, id)
 		// if err != nil {
 		// 	return err
 		// }
+		// if old {
+		// 	err = cards.RedownloadCard(frags, id)
+		// 	if err != nil {
+		// 		return err
+		// 	}
+		// }
+
 		_, err = updateFragranceDetails(frags, scraper, id)
 		if err != nil {
 			return fmt.Errorf("Failed getting details for ID %d: %w", id, err)
@@ -168,6 +173,22 @@ func UpdateFragrances(frags *config.Frags, numRequests int) error {
 		SpamDelay(5, 10)
 	}
 	return nil
+}
+
+// Returns true if card with id is older than one month
+func oldCard(frags *config.Frags, id int32) (bool, error) {
+	card, err := frags.DB.GetCard(context.Background(), id)
+	if err != nil {
+		return true, err
+	}
+
+	oneMonthAgo := time.Now().AddDate(0, -1, 0)
+
+	if card.Updated.Before(oneMonthAgo) {
+		return true, nil
+	}
+
+	return false, nil
 }
 
 // List all unique brand names in fragrances table and check if al exist in perfumers table
