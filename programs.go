@@ -34,7 +34,7 @@ func ScraperService(frags *config.Frags, maxRequests int) {
 	// })
 
 	// this will run every waking hour every day and keep updating maxRequests*16 fragrance items every day
-	c.AddFunc("30 8-23 * * *", func() {
+	c.AddFunc("00 8-23 * * *", func() {
 		fragrances.SpamDelay(60, 300)
 		updateFragranceDetails(frags, maxRequests)
 	})
@@ -45,8 +45,8 @@ func ScraperService(frags *config.Frags, maxRequests int) {
 	select {}
 
 	//TODO:
-	// 1 - get all perfumers updated (~1000)
-	// 2 - get all existing perfumes updated (~60000)
+	// 1 - get all perfumers updated (~1000) - done
+	// 2 - get all existing perfumes updated (~60000) - in progress
 	// 3 - make a function to keep updating the oldes fragrances in the database
 	// 4 - combine with ManualDbUpdate
 }

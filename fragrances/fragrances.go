@@ -123,22 +123,21 @@ func UpdateFragrances(frags *config.Frags, numRequests int) error {
 	// add some variance to request number for more human appearance
 	num := randomise(numRequests, 5)
 
-	// TODO: switch to GetFragrancesToUpdate once the inital list is done
-
 	// Gets a full list of fragrances that are missing details (newly added)
-	fragIDs, err := frags.DB.GetFragrancesWithoutDetails(context.Background(), int32(num))
-	if err != nil {
-		return fmt.Errorf("Failed getting IDs from database: %w", err)
-	}
-	// Gets only a number of oldest fragrances to update
-	// fragIDs, err := frags.DB.GetFragrancesToUpdate(context.Background(), num)
+	// fragIDs, err := frags.DB.GetFragrancesWithoutDetails(context.Background(), int32(num))
 	// if err != nil {
 	// 	return fmt.Errorf("Failed getting IDs from database: %w", err)
 	// }
 
+	// Gets only a number of oldest fragrances to update
+	fragIDs, err := frags.DB.GetFragrancesToUpdate(context.Background(), int32(num))
+	if err != nil {
+		return fmt.Errorf("Failed getting IDs from database: %w", err)
+	}
+
 	numFrags := len(fragIDs)
 	// TODO: also print the oldest 'updated' value?
-	log.Printf("Updating %d fragrances without details", numFrags)
+	log.Printf("Updating %d fragrances...", numFrags)
 
 	scraper, err := fragrantica.NewScraper()
 	if err != nil {
@@ -150,16 +149,16 @@ func UpdateFragrances(frags *config.Frags, numRequests int) error {
 		count += 1
 
 		// Redownload the card if it's outdated
-		// old, err := oldCard(frags, id)
-		// if err != nil {
-		// 	return err
-		// }
-		// if old {
-		// 	err = cards.RedownloadCard(frags, id)
-		// 	if err != nil {
-		// 		return err
-		// 	}
-		// }
+		old, err := oldCard(frags, id)
+		if err != nil {
+			return err
+		}
+		if old {
+			err = cards.RedownloadCard(frags, id)
+			if err != nil {
+				return err
+			}
+		}
 
 		_, err = updateFragranceDetails(frags, scraper, id)
 		if err != nil {
@@ -167,9 +166,6 @@ func UpdateFragrances(frags *config.Frags, numRequests int) error {
 		}
 		log.Printf("Updated fragrance with ID:%d (%d/%d)", id, count, numFrags)
 		// spread out requests to not overload web request limits
-		if count >= num {
-			return nil
-		}
 		SpamDelay(5, 10)
 	}
 	return nil
