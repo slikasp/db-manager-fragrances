@@ -220,7 +220,7 @@ func UpdatePerfumers(frags *config.Frags, numRequests int) error {
 			log.Printf("Added perfumer: %s (%d/%d)", brand.String, count, numPerfumers)
 
 		}
-		// limit to not overload fragrantica
+		// limit to not overload websites
 		if count >= randomise(numRequests, 5) {
 			return nil
 		}
