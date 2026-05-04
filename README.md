@@ -80,17 +80,6 @@ Columns
 | `accord9` | `text` |  Nullable |
 | `accord10` | `text` |  Nullable |
 
-### Table `goose_db_version`
-
-Columns
-
-| Name | Type | Constraints |
-|------|------|-------------|
-| `id` | `int4` | Primary Identity |
-| `version_id` | `int8` |  |
-| `is_applied` | `bool` |  |
-| `tstamp` | `timestamp` |  |
-
 ### Table `perfumers`
 
 Columns
