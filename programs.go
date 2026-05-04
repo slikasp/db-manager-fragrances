@@ -22,16 +22,16 @@ func ScraperService(frags *config.Frags, maxRequests int) {
 	c := cron.New()
 
 	// this will run once a week to check if we have downloaded all cards listed in DB and if any missing cards were uploaded to the web
-	// c.AddFunc("0 0 * * 1", func() {
-	//	checkExistingCards(frags)
-	// 	checkMissingCards(frags)
-	// })
+	c.AddFunc("0 0 * * 1", func() {
+		checkExistingCards(frags)
+		checkMissingCards(frags)
+	})
 
 	// this will once every morning to look for new fragrances
-	// c.AddFunc("0 7 * * *", func() {
-	// 	lookForNewCards(frags)
-	// 	addMissingFragrances(frags)
-	// })
+	c.AddFunc("0 7 * * *", func() {
+		lookForNewCards(frags)
+		addMissingFragrances(frags)
+	})
 
 	// this will run every waking hour every day and keep updating maxRequests*16 fragrance items every day
 	c.AddFunc("00 8-23 * * *", func() {
@@ -47,8 +47,8 @@ func ScraperService(frags *config.Frags, maxRequests int) {
 	//TODO:
 	// 1 - get all perfumers updated (~1000) - done
 	// 2 - get all existing perfumes updated (~60000) - in progress
-	// 3 - make a function to keep updating the oldes fragrances in the database
-	// 4 - combine with ManualDbUpdate
+	// 3 - make a function to keep updating the oldest fragrances in the database - done
+	// 4 - combine with ManualDbUpdate - done
 }
 
 // Go through all IDs that have no cards and update if they are now present

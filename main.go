@@ -29,7 +29,7 @@ func main() {
 
 	// ManualDbUpdate(frags)
 
-	ScraperService(frags, 25)
+	ScraperService(frags, 30)
 
 	log.Println("---Application closed---")
 	fmt.Println("---Application closed---")

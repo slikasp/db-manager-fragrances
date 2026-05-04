@@ -8,6 +8,11 @@ SELECT url
 FROM fragrances
 WHERE fragrantica_id = $1;
 
+-- name: GetCountFragrancesWithoutDetails :one
+SELECT COUNT(*) AS match_count
+FROM fragrances
+WHERE name IS NULL;
+
 -- name: GetFragrancesWithoutDetails :many
 SELECT fragrantica_id
 FROM fragrances

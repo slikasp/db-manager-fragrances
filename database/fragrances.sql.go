@@ -29,6 +29,19 @@ func (q *Queries) AddFragranceLink(ctx context.Context, arg AddFragranceLinkPara
 	return err
 }
 
+const getCountFragrancesWithoutDetails = `-- name: GetCountFragrancesWithoutDetails :one
+SELECT COUNT(*) AS match_count
+FROM fragrances
+WHERE name IS NULL
+`
+
+func (q *Queries) GetCountFragrancesWithoutDetails(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getCountFragrancesWithoutDetails)
+	var match_count int64
+	err := row.Scan(&match_count)
+	return match_count, err
+}
+
 const getFragrance = `-- name: GetFragrance :one
 SELECT id, url, name, brand, country, gender, rating_value, rating_count, year, top_notes, middle_notes, base_notes, perfumer1, perfumer2, accord1, accord2, accord3, accord4, accord5, fragrantica_id, updated, accord6, accord7, accord8, accord9, accord10 
 FROM fragrances 

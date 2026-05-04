@@ -123,6 +123,13 @@ func UpdateFragrances(frags *config.Frags, numRequests int) error {
 	// add some variance to request number for more human appearance
 	num := randomise(numRequests, 5)
 
+	// TODO: after this hits 0 (end of year) change to outdated (older than 1 month)
+	missing, err := frags.DB.GetCountFragrancesWithoutDetails(context.Background())
+	if err != nil {
+		return fmt.Errorf("Failed getting count from database: %w", err)
+	}
+	log.Printf("Fragrances missing details: %d", missing)
+
 	// Gets a full list of fragrances that are missing details (newly added)
 	// fragIDs, err := frags.DB.GetFragrancesWithoutDetails(context.Background(), int32(num))
 	// if err != nil {
@@ -136,7 +143,6 @@ func UpdateFragrances(frags *config.Frags, numRequests int) error {
 	}
 
 	numFrags := len(fragIDs)
-	// TODO: also print the oldest 'updated' value?
 	log.Printf("Updating %d fragrances...", numFrags)
 
 	scraper, err := fragrantica.NewScraper()
