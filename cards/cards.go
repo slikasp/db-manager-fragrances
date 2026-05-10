@@ -69,9 +69,13 @@ func downloadCard(cardID int32) (database.AddCardParams, error) {
 // Only use this for a fresh database because it will redownload all exisiting cards too.
 // Might be used to force update and find new cards that weren't there before.
 // Populates DB even with non existing fragrance cards.
-func DownloadAllCards(frags *config.Frags) error {
+func DownloadAllCards(db *config.Database) error {
 	startCardID := int32(1)
-	endCardID := frags.LastID
+	// Set ID of last card from the database
+	endCardID, err := db.Queries.GetLastCardID(context.Background())
+	if err != nil {
+		return err
+	}
 
 	for id := startCardID; id <= endCardID; id++ {
 		// Try downloading the card (existing or not)
@@ -82,12 +86,12 @@ func DownloadAllCards(frags *config.Frags) error {
 		}
 
 		// Check if card already exists
-		_, err = frags.DB.GetCard(context.Background(), id)
+		_, err = db.Queries.GetCard(context.Background(), id)
 		if err != nil {
 			// ID doesn't exist
 			if errors.Is(err, sql.ErrNoRows) {
 				// Add new card to the database
-				_, err = frags.DB.AddCard(context.Background(), card)
+				_, err = db.Queries.AddCard(context.Background(), card)
 				if err != nil {
 					return fmt.Errorf("Adding card to database failed for ID %d: %w", id, err)
 				}
@@ -98,7 +102,7 @@ func DownloadAllCards(frags *config.Frags) error {
 			}
 		} else {
 			// Update card if exists
-			_, err = frags.DB.UpdateCard(context.Background(), database.UpdateCardParams{
+			_, err = db.Queries.UpdateCard(context.Background(), database.UpdateCardParams{
 				FragranticaID: card.FragranticaID,
 				Image:         card.Image,
 				HasCard:       card.HasCard,
@@ -113,8 +117,8 @@ func DownloadAllCards(frags *config.Frags) error {
 }
 
 // Goes through all cards marked with HasCard == false and retries them
-func CheckMissingCards(frags *config.Frags) error {
-	cardIDs, err := frags.DB.GetMissingCardIDs(context.Background())
+func CheckMissingCards(db *config.Database) error {
+	cardIDs, err := db.Queries.GetMissingCardIDs(context.Background())
 	if err != nil {
 		return fmt.Errorf("Failed getting missing cards from database: %w", err)
 	}
@@ -131,7 +135,7 @@ func CheckMissingCards(frags *config.Frags) error {
 				return fmt.Errorf("Card download failed for ID %d: %w", id, err)
 			} else {
 				// Card found -> update DB
-				_, err = frags.DB.UpdateCard(context.Background(), database.UpdateCardParams{
+				_, err = db.Queries.UpdateCard(context.Background(), database.UpdateCardParams{
 					FragranticaID: card.FragranticaID,
 					Image:         card.Image,
 					HasCard:       card.HasCard,
@@ -157,8 +161,8 @@ func CheckMissingCards(frags *config.Frags) error {
 }
 
 // Goes through all cards marked with HasCard == true and checks if they exist in local storage
-func CheckExistingCards(frags *config.Frags) error {
-	cardIDs, err := frags.DB.GetExistingCardIDs(context.Background())
+func CheckExistingCards(db *config.Database) error {
+	cardIDs, err := db.Queries.GetExistingCardIDs(context.Background())
 	if err != nil {
 		return fmt.Errorf("Failed getting existing cards from database: %w", err)
 	}
@@ -178,7 +182,7 @@ func CheckExistingCards(frags *config.Frags) error {
 					return fmt.Errorf("Card download failed for ID %d: %w", id, err)
 				} else {
 					// Card found -> update DB
-					_, err = frags.DB.UpdateCard(context.Background(), database.UpdateCardParams{
+					_, err = db.Queries.UpdateCard(context.Background(), database.UpdateCardParams{
 						FragranticaID: card.FragranticaID,
 						Image:         card.Image,
 						HasCard:       card.HasCard,
@@ -248,7 +252,7 @@ func listDiff(a, b []int32) []int32 {
 }
 
 // Redownloads a card (to be used as part of fragrance update)
-func RedownloadCard(frags *config.Frags, id int32) error {
+func RedownloadCard(db *config.Database, id int32) error {
 	card, err := downloadCard(id)
 	if card.HasCard {
 		// card found
@@ -257,7 +261,7 @@ func RedownloadCard(frags *config.Frags, id int32) error {
 			return fmt.Errorf("Card download failed for ID %d: %w", id, err)
 		} else {
 			// card found & downloaded -> update DB
-			_, err = frags.DB.UpdateCard(context.Background(), database.UpdateCardParams{
+			_, err = db.Queries.UpdateCard(context.Background(), database.UpdateCardParams{
 				FragranticaID: card.FragranticaID,
 				Image:         card.Image,
 				HasCard:       card.HasCard,
@@ -275,8 +279,8 @@ func RedownloadCard(frags *config.Frags, id int32) error {
 
 // Need to remove all cards from the database that have no card after last ID with a card
 // Then run this, because it will create card entries in DB whether they are available or not
-func FindNewCards(frags *config.Frags, cardsToCheck int) error {
-	id, err := frags.DB.GetLastCardID(context.Background())
+func FindNewCards(db *config.Database, cardsToCheck int) error {
+	id, err := db.Queries.GetLastCardID(context.Background())
 	if err != nil {
 		return fmt.Errorf("Failed getting last card ID from database: %w", err)
 	}
@@ -302,11 +306,11 @@ func FindNewCards(frags *config.Frags, cardsToCheck int) error {
 			}
 
 			// If found, no errors -> Check if card already exists
-			_, err = frags.DB.GetCard(context.Background(), currentID)
+			_, err = db.Queries.GetCard(context.Background(), currentID)
 			if err != nil {
 				// doesn't exist -> Add new card to the database
 				if errors.Is(err, sql.ErrNoRows) {
-					_, err = frags.DB.AddCard(context.Background(), card)
+					_, err = db.Queries.AddCard(context.Background(), card)
 					if err != nil {
 						return fmt.Errorf("Adding card to database failed for ID %d: %w", currentID, err)
 					}
@@ -317,7 +321,7 @@ func FindNewCards(frags *config.Frags, cardsToCheck int) error {
 				}
 			} else {
 				// Update card if it exists in the database, card might have appeared (and we just downloaded it)
-				_, err = frags.DB.UpdateCard(context.Background(), database.UpdateCardParams{
+				_, err = db.Queries.UpdateCard(context.Background(), database.UpdateCardParams{
 					FragranticaID: card.FragranticaID,
 					Image:         card.Image,
 					HasCard:       card.HasCard,

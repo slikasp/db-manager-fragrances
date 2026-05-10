@@ -14,11 +14,10 @@ I mainly wrote this for myself to have an up to date fragrance list for another 
 But if you really want to run it yourself I recommend creating a list of ID's of fragrances you want to download. For example, I only needed a list of ones I have owned myself, downloading all images take quite a bit of space, the full list is >120k items.
 Also, run it as a service with low number of web requests, otherwise you'll hit website limits and get blocked.
 
-It requires a config file with PostgreSQL database link in the executable directory to function (you can find the schema below):
+It requires an .env file with PostgreSQL database link in the executable directory to function (you can find the schema below):
 `
-{
-    "remote_db_url": "postgresql://<db_address>:<db_port>/postgres"
-}
+BUILD_ENV=prod
+POSTGRES_DB=postgresql://<db_address>:<db_port>/postgres
 `
 
 ## What it does:

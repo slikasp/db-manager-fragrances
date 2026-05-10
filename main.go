@@ -9,17 +9,11 @@ import (
 )
 
 func main() {
-	logFile, err := setupLogging("app.log")
-	if err != nil {
-		log.Fatalf("failed to setup logging: %v", err)
-	}
-	defer logFile.Close()
-
 	log.Println("---Application started---")
 	fmt.Println("---Application started---")
 
 	// Setup
-	frags, err := config.Setup()
+	db, err := config.Setup()
 	if err != nil {
 		log.Fatalf("Error reading config: %v", err)
 	}
@@ -29,7 +23,7 @@ func main() {
 
 	// ManualDbUpdate(frags)
 
-	ScraperService(frags, 30)
+	ScraperService(db, 30)
 
 	log.Println("---Application closed---")
 	fmt.Println("---Application closed---")

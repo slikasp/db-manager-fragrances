@@ -11,32 +11,32 @@ import (
 )
 
 // Manual update of DB items only
-func ManualDbUpdate(frags *config.Frags) {
-	checkMissingCards(frags)
-	lookForNewCards(frags)
-	addMissingFragrances(frags)
+func ManualDbUpdate(db *config.Database) {
+	checkMissingCards(db)
+	lookForNewCards(db)
+	addMissingFragrances(db)
 }
 
 // Service to keep updating DB with details from the web, maxRequests number of requests per hour
-func ScraperService(frags *config.Frags, maxRequests int) {
+func ScraperService(db *config.Database, maxRequests int) {
 	c := cron.New()
 
 	// this will run once a week to check if we have downloaded all cards listed in DB and if any missing cards were uploaded to the web
 	c.AddFunc("0 0 * * 1", func() {
-		checkExistingCards(frags)
-		checkMissingCards(frags)
+		checkExistingCards(db)
+		checkMissingCards(db)
 	})
 
 	// this will once every morning to look for new fragrances
 	c.AddFunc("0 7 * * *", func() {
-		lookForNewCards(frags)
-		addMissingFragrances(frags)
+		lookForNewCards(db)
+		addMissingFragrances(db)
 	})
 
 	// this will run every waking hour every day and keep updating maxRequests*16 fragrance items every day
 	c.AddFunc("00 8-23 * * *", func() {
 		fragrances.SpamDelay(60, 300)
-		updateFragranceDetails(frags, maxRequests)
+		updateFragranceDetails(db, maxRequests)
 	})
 
 	c.Start()
@@ -54,24 +54,24 @@ func ScraperService(frags *config.Frags, maxRequests int) {
 // Go through all IDs that have no cards and update if they are now present
 // This part takes quite a long time so I would run this rarely and only report on the progress
 // >40k missing cards, takes almost 3 hours now, yikes!
-func checkMissingCards(frags *config.Frags) {
+func checkMissingCards(db *config.Database) {
 	// TODO: make this run in parallel to everything else and remove loggin to file
 	log.Println("> Checking missing cards - start >")
 	fmt.Println("-Checking missing cards-")
 
-	err := cards.CheckMissingCards(frags)
+	err := cards.CheckMissingCards(db)
 	if err != nil {
 		log.Fatalf("Failed getting new cards: %v", err)
 	}
 	log.Println("< Checking missing cards - end <")
 }
 
-func checkExistingCards(frags *config.Frags) {
+func checkExistingCards(db *config.Database) {
 	// TODO: make this run in parallel to everything else and remove loggin to file
 	log.Println("> Checking downloaded cards - start >")
 	fmt.Println("-Checking downloaded cards-")
 
-	err := cards.CheckExistingCards(frags)
+	err := cards.CheckExistingCards(db)
 	if err != nil {
 		log.Fatalf("Failed checking downloaded cards: %v", err)
 	}
@@ -79,7 +79,7 @@ func checkExistingCards(frags *config.Frags) {
 }
 
 // Go throug all IDs after the last found card and look for new cards
-func lookForNewCards(frags *config.Frags) {
+func lookForNewCards(db *config.Database) {
 	// With low number of cards to check you can hit a patch of no cards that will prevent you form fiding new ones
 	// 100 - too low
 	// 1000 - a bit too much
@@ -87,7 +87,7 @@ func lookForNewCards(frags *config.Frags) {
 	log.Println("> Looking for new cards - start >")
 	fmt.Println("-Looking for new cards-")
 
-	err := cards.FindNewCards(frags, 300)
+	err := cards.FindNewCards(db, 300)
 	if err != nil {
 		log.Fatalf("Failed finding new cards: %v", err)
 	}
@@ -95,11 +95,11 @@ func lookForNewCards(frags *config.Frags) {
 }
 
 // Go through newly found cards, try decoding them and add new fragrance entries
-func addMissingFragrances(frags *config.Frags) {
+func addMissingFragrances(db *config.Database) {
 	log.Println("> Adding missing fragrances - start >")
 	fmt.Println("-Adding missing fragrances-")
 
-	err := fragrances.AddMissingFragrances(frags)
+	err := fragrances.AddMissingFragrances(db)
 	if err != nil {
 		log.Fatalf("Failed adding new fragrances: %v", err)
 	}
@@ -108,11 +108,11 @@ func addMissingFragrances(frags *config.Frags) {
 }
 
 // Go through new fragrances, find relevant data and update them
-func updateFragranceDetails(frags *config.Frags, numRequests int) {
+func updateFragranceDetails(db *config.Database, numRequests int) {
 	log.Println("> Adding missing details - start >")
 	fmt.Println("-Adding missing details-")
 
-	err := fragrances.UpdateFragrances(frags, numRequests)
+	err := fragrances.UpdateFragrances(db, numRequests)
 	if err != nil {
 		log.Fatalf("UpdateFragrances: %v", err)
 	}
@@ -122,11 +122,11 @@ func updateFragranceDetails(frags *config.Frags, numRequests int) {
 
 // do not use after initial list of perfumers is complete - new perfumer to be added together with fragrance
 // TODO: remake this so all perfumers need to be updated - add 'updated' column
-func updatePerfumers(frags *config.Frags, numRequests int) {
+func updatePerfumers(db *config.Database, numRequests int) {
 	log.Println("> Updating perfumers - start >")
 	fmt.Println("-Updating perfumers-")
 
-	err := fragrances.UpdatePerfumers(frags, numRequests)
+	err := fragrances.UpdatePerfumers(db, numRequests)
 	if err != nil {
 		log.Fatalf("Failed updating perfumers: %v", err)
 	}

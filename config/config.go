@@ -1,101 +1,72 @@
 package config
 
 import (
-	"context"
 	"database/sql"
-	"encoding/json"
+	"fmt"
+	"log/slog"
 	"os"
-	"path/filepath"
 
+	"github.com/joho/godotenv"
 	"github.com/slikasp/dbmanfrags/database"
 )
 
-const configFileName = "config.json"
+// const configFileName = "config.json"
 
-type Config struct {
-	RemoteDbURL string `json:"remote_db_url"`
-	CurrentID   int32  `json:"current_id"`
+type Database struct {
+	Queries  *database.Queries
+	BuildEnv string
+	Logger   *slog.Logger
 }
 
-type Frags struct {
-	DB     *database.Queries
-	LastID int32
-}
-
-func Setup() (*Frags, error) {
+func Setup() (*Database, error) {
 	// Read config
-	cfg, err := Read()
+	err := godotenv.Load()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("No .env file found")
 	}
+	db := Database{
+		BuildEnv: os.Getenv("BUILD_ENV"),
+	}
+	postgresURL := os.Getenv("POSTGRES_URL")
 
 	// Load the database
-	dbtx, err := sql.Open("postgres", cfg.RemoteDbURL)
+	dbtx, err := sql.Open("postgres", postgresURL)
 	if err != nil {
 		return nil, err
 	}
-	dbQueries := database.New(dbtx)
+	db.Queries = database.New(dbtx)
 
-	// Create database struct to be passed to functions
-	frags := &Frags{
-		DB: dbQueries,
-	}
-
-	// Set ID of last card from the database
-	frags.LastID, err = frags.DB.GetLastCardID(context.Background())
+	logger, logCloser, err := initialiseLogging("app.log")
 	if err != nil {
 		return nil, err
 	}
+	defer logCloser()
 
-	return frags, nil
+	db.Logger = logger
+
+	return &db, nil
 }
 
-func getConfigFilePath() (string, error) {
-	currentDir, err := os.Getwd()
+func initialiseLogging(logFile string) (*slog.Logger, func() error, error) {
+	file, err := os.OpenFile(logFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o644)
 	if err != nil {
-		return "", err
+		return nil, nil, fmt.Errorf("failed to open log file: %w", err)
 	}
-	path := filepath.Join(currentDir, configFileName)
-	return path, nil
-}
-
-func Read() (Config, error) {
-	// Read the config file in user's HOME directory
-	path, err := getConfigFilePath()
-	if err != nil {
-		return Config{}, err
+	closer := func() error {
+		return file.Close()
 	}
 
-	file, err := os.Open(path)
-	if err != nil {
-		return Config{}, err
-	}
-	defer file.Close()
+	debugHandler := slog.NewTextHandler(file, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	})
+	errorHandler := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+		Level: slog.LevelError,
+	})
 
-	// Parse and return the Config struct
-	decoder := json.NewDecoder(file)
-	cfg := Config{}
-	err = decoder.Decode(&cfg)
-	if err != nil {
-		return Config{}, err
-	}
+	logger := slog.New(slog.NewMultiHandler(
+		debugHandler,
+		errorHandler,
+	))
 
-	return cfg, nil
-}
-
-func Write(cfg Config) error {
-	path, err := getConfigFilePath()
-	if err != nil {
-		return err
-	}
-
-	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	encoder := json.NewEncoder(file)
-	encoder.SetIndent("", "    ")
-	return encoder.Encode(cfg)
+	return logger, closer, nil
 }

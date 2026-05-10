@@ -1,6 +1,7 @@
 cards/en
 cards/cards/en/*
 cards/cards/qr/*
+.env
 config.json
 commands.txt
 info.txt
