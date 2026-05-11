@@ -21,20 +21,27 @@ func ManualDbUpdate(db *config.Database) {
 func ScraperService(db *config.Database, maxRequests int) {
 	c := cron.New()
 
-	// this will run once a week to check if we have downloaded all cards listed in DB and if any missing cards were uploaded to the web
-	c.AddFunc("0 0 * * 1", func() {
-		checkExistingCards(db)
-		checkMissingCards(db)
-	})
+	schedule := "30 8-23 * * *"
 
-	// this will once every morning to look for new fragrances
-	c.AddFunc("0 7 * * *", func() {
-		lookForNewCards(db)
-		addMissingFragrances(db)
-	})
+	// only run these in the production environment where local card cache is located
+	if db.BuildEnv == "prod" {
+		// this will run once a week to check if we have downloaded all cards listed in DB and if any missing cards were uploaded to the web
+		c.AddFunc("0 0 * * 1", func() {
+			checkExistingCards(db)
+			checkMissingCards(db)
+		})
+
+		// this will once every morning to look for new fragrances
+		c.AddFunc("0 7 * * *", func() {
+			lookForNewCards(db)
+			addMissingFragrances(db)
+		})
+
+		schedule = "00 8-23 * * *"
+	}
 
 	// this will run every waking hour every day and keep updating maxRequests*16 fragrance items every day
-	c.AddFunc("00 8-23 * * *", func() {
+	c.AddFunc(schedule, func() {
 		fragrances.SpamDelay(60, 300)
 		updateFragranceDetails(db, maxRequests)
 	})
