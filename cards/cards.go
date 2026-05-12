@@ -23,9 +23,7 @@ func CheckMissingCards(db *config.Database) error {
 		return err
 	}
 
-	db.Logger.Info("missing cards",
-		"number", len(cardIDs),
-	)
+	db.Logger.Info("missing cards", "number", len(cardIDs))
 	cardsAdded := 0
 
 	for _, id := range cardIDs {
@@ -47,10 +45,7 @@ func CheckMissingCards(db *config.Database) error {
 					return err
 				}
 				cardsAdded += 1
-				db.Logger.Info("card added",
-					"id", id,
-					"location", card.Image,
-				)
+				db.Logger.Info("card added", "id", id, "location", card.Image)
 			}
 			// } else {
 			// TODO: create a custom error type for card downloads and log only actual errors
@@ -60,9 +55,7 @@ func CheckMissingCards(db *config.Database) error {
 
 		// Proceed to next id if no card found
 	}
-	db.Logger.Info("cards added",
-		"number", cardsAdded,
-	)
+	db.Logger.Info("cards added", "number", cardsAdded)
 	return nil
 }
 
@@ -194,7 +187,7 @@ func RedownloadCard(db *config.Database, id int32) error {
 				db.Logger.Error("update card", "id", id, "error", err)
 				return err
 			}
-			db.Logger.Info("card updated", "id", id, "path", card.Image)
+			db.Logger.Info("updated card", "id", id, "path", card.Image)
 		}
 	}
 	return nil

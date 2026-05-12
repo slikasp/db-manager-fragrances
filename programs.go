@@ -39,6 +39,8 @@ func ScraperService(db *config.Database, numRequests int) {
 		})
 
 		schedule = "00 8-23 * * *"
+	} else {
+		db.Logger.Warn("APPLICATION RUNNING IN DEVELOPMENT MODE, SET 'BUILD_ENV=prod' IN .env FILE")
 	}
 
 	// this will run every waking hour every day and keep updating maxRequests*16 fragrance items every day

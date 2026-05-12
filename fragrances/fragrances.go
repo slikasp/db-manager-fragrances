@@ -160,15 +160,18 @@ func UpdateFragrances(db *config.Database, numRequests int) error {
 	for _, id := range fragIDs {
 		count += 1
 
-		// Redownload the card if it's outdated
-		old, err := oldCard(db, id)
-		if err != nil {
-			return err
-		}
-		if old {
-			err = cards.RedownloadCard(db, id)
+		// only download cards in prod mode (where main card repository resides)
+		if db.BuildEnv == "prod" {
+			// Redownload the card if it's outdated
+			old, err := oldCard(db, id)
 			if err != nil {
 				return err
+			}
+			if old {
+				err = cards.RedownloadCard(db, id)
+				if err != nil {
+					return err
+				}
 			}
 		}
 
