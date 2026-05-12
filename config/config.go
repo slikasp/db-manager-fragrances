@@ -18,33 +18,36 @@ type Database struct {
 	Logger   *slog.Logger
 }
 
-func Setup() (*Database, error) {
+func Setup() (*Database, func() error, error) {
 	// Read config
 	err := godotenv.Load()
 	if err != nil {
-		return nil, fmt.Errorf("No .env file found")
+		return nil, nil, fmt.Errorf("No .env file found")
+	}
+	build := "dev"
+	if os.Getenv("BUILD_ENV") != "" {
+		build = os.Getenv("BUILD_ENV")
 	}
 	db := Database{
-		BuildEnv: os.Getenv("BUILD_ENV"),
+		BuildEnv: build,
 	}
 	postgresURL := os.Getenv("POSTGRES_URL")
 
 	// Load the database
 	dbtx, err := sql.Open("postgres", postgresURL)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	db.Queries = database.New(dbtx)
 
 	logger, logCloser, err := initialiseLogging("app.log")
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	defer logCloser()
 
 	db.Logger = logger
 
-	return &db, nil
+	return &db, logCloser, nil
 }
 
 func initialiseLogging(logFile string) (*slog.Logger, func() error, error) {
@@ -56,16 +59,16 @@ func initialiseLogging(logFile string) (*slog.Logger, func() error, error) {
 		return file.Close()
 	}
 
-	debugHandler := slog.NewTextHandler(file, &slog.HandlerOptions{
+	fileHandler := slog.NewTextHandler(file, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	})
-	errorHandler := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
-		Level: slog.LevelError,
+	consoleHandler := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+		Level: slog.LevelWarn,
 	})
 
 	logger := slog.New(slog.NewMultiHandler(
-		debugHandler,
-		errorHandler,
+		fileHandler,
+		consoleHandler,
 	))
 
 	return logger, closer, nil
