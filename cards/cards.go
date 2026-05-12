@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -20,10 +19,13 @@ import (
 func CheckMissingCards(db *config.Database) error {
 	cardIDs, err := db.Queries.GetMissingCardIDs(context.Background())
 	if err != nil {
-		return fmt.Errorf("Failed getting missing cards from database: %w", err)
+		db.Logger.Error("get missing cards from database", "error", err)
+		return err
 	}
 
-	log.Printf("Missing cards: %d", len(cardIDs))
+	db.Logger.Info("missing cards",
+		"number", len(cardIDs),
+	)
 	cardsAdded := 0
 
 	for _, id := range cardIDs {
@@ -31,7 +33,8 @@ func CheckMissingCards(db *config.Database) error {
 		if card.HasCard {
 			if err != nil {
 				// Card found but not downloaded -> return download error
-				return fmt.Errorf("Card download failed for ID %d: %w", id, err)
+				db.Logger.Error("downloadCard", "error", err)
+				return err
 			} else {
 				// Card found -> update DB
 				_, err = db.Queries.UpdateCard(context.Background(), database.UpdateCardParams{
@@ -40,22 +43,26 @@ func CheckMissingCards(db *config.Database) error {
 					HasCard:       card.HasCard,
 				})
 				if err != nil {
-					return fmt.Errorf("Could not update card with ID %d: %w", id, err)
+					db.Logger.Error("update card", "id", id, "error", err)
+					return err
 				}
 				cardsAdded += 1
-				log.Printf("New card added, ID:%d, URL:%s", id, card.Image)
+				db.Logger.Info("card added",
+					"id", id,
+					"location", card.Image,
+				)
 			}
 			// } else {
 			// TODO: create a custom error type for card downloads and log only actual errors
 			// these are 100% no card found so far
 			// Log error (most likely card not found + ID)
-			// log.Println(err)
 		}
 
 		// Proceed to next id if no card found
 	}
-
-	log.Printf("New cards added: %d / %d", cardsAdded, len(cardIDs))
+	db.Logger.Info("cards added",
+		"number", cardsAdded,
+	)
 	return nil
 }
 
@@ -63,14 +70,15 @@ func CheckMissingCards(db *config.Database) error {
 func CheckExistingCards(db *config.Database) error {
 	cardIDs, err := db.Queries.GetExistingCardIDs(context.Background())
 	if err != nil {
-		return fmt.Errorf("Failed getting existing cards from database: %w", err)
+		db.Logger.Error("get existing cards from database", "error", err)
+		return err
 	}
 
 	localCards, err := listCardFiles()
 
 	diff := listDiff(cardIDs, localCards)
 	if len(diff) > 0 {
-		log.Printf("Expected/found cards: %d/%d", len(cardIDs), len(localCards))
+		db.Logger.Info("cards in database", "expected", len(cardIDs), "found", len(localCards))
 
 		for _, id := range diff {
 			card, err := downloadCard(id)
@@ -78,7 +86,8 @@ func CheckExistingCards(db *config.Database) error {
 				// Card found
 				if err != nil {
 					// but not downloaded -> return download error
-					return fmt.Errorf("Card download failed for ID %d: %w", id, err)
+					db.Logger.Error("downloadCard", "error", err)
+					return err
 				} else {
 					// Card found -> update DB
 					_, err = db.Queries.UpdateCard(context.Background(), database.UpdateCardParams{
@@ -87,9 +96,10 @@ func CheckExistingCards(db *config.Database) error {
 						HasCard:       card.HasCard,
 					})
 					if err != nil {
-						return fmt.Errorf("Could not update card with ID %d: %w", id, err)
+						db.Logger.Error("update card", "id", id, "error", err)
+						return err
 					}
-					log.Printf("Card redownloaded: %s", makeFilePath(id))
+					db.Logger.Info("card redownloaded", "path", makeFilePath(id))
 				}
 			}
 		}
@@ -104,7 +114,8 @@ func CheckExistingCards(db *config.Database) error {
 func FindNewCards(db *config.Database, cardsToCheck int) error {
 	id, err := db.Queries.GetLastCardID(context.Background())
 	if err != nil {
-		return fmt.Errorf("Failed getting last card ID from database: %w", err)
+		db.Logger.Error("get last card ID from database", "error", err)
+		return err
 	}
 
 	cardsFound := 0
@@ -115,16 +126,15 @@ func FindNewCards(db *config.Database, cardsToCheck int) error {
 	for currentID <= lastFound+int32(cardsToCheck) {
 		// Try downloading the card (existing or not)
 		card, err := downloadCard(currentID)
-
-		// log.Printf("checking: %d", id)
-
+		db.Logger.Debug("checking card", "id", id, "url", card.Url)
 		if card.HasCard {
 			// Card found -> look for 100 more cards
 			cardsFound += 1
 			lastFound = currentID
 			// If card was found, but error still returned -> stop execution
 			if err != nil {
-				return fmt.Errorf("Card download failed for ID %d: %w", currentID, err)
+				db.Logger.Error("downloadCard", "error", err)
+				return err
 			}
 
 			// If found, no errors -> Check if card already exists
@@ -134,12 +144,14 @@ func FindNewCards(db *config.Database, cardsToCheck int) error {
 				if errors.Is(err, sql.ErrNoRows) {
 					_, err = db.Queries.AddCard(context.Background(), card)
 					if err != nil {
-						return fmt.Errorf("Adding card to database failed for ID %d: %w", currentID, err)
+						db.Logger.Error("add card to database", "id", currentID, "error", err)
+						return err
 					}
-					log.Printf("New card added, ID:%d, URL:%s", currentID, card.Image)
+					db.Logger.Info("new card added", "id", currentID, "path", card.Image)
 				} else {
 					// Real error -> stop execution
-					return fmt.Errorf("Could not get card from the database with ID %d: %w", currentID, err)
+					db.Logger.Error("get card from database", "id", currentID, "error", err)
+					return err
 				}
 			} else {
 				// Update card if it exists in the database, card might have appeared (and we just downloaded it)
@@ -149,18 +161,94 @@ func FindNewCards(db *config.Database, cardsToCheck int) error {
 					HasCard:       card.HasCard,
 				})
 				if err != nil {
-					return fmt.Errorf("Could not update card with ID %d: %w", currentID, err)
+					db.Logger.Error("update card", "id", currentID, "error", err)
+					return err
 				}
 			}
-
-			// Card already exists in database -> do nothing, CheckMissingCards will recheck
+			db.Logger.Debug("card already in database", "id", id)
 		}
 		// Card not foun -> proceed to next ID
 		currentID += 1
 
 	}
+	db.Logger.Info("cards found", "last_found", lastFound, "found", cardsFound)
+	return nil
+}
 
-	log.Printf("Last found card: %d. Cards found: %d\n", lastFound, cardsFound)
+// Redownloads a card (to be used as part of fragrance update)
+func RedownloadCard(db *config.Database, id int32) error {
+	card, err := downloadCard(id)
+	if card.HasCard {
+		if err != nil {
+			// card found,  but not downloaded -> return download error
+			db.Logger.Error("downloadCard", "error", err)
+			return err
+		} else {
+			// card found & downloaded -> update DB
+			_, err = db.Queries.UpdateCard(context.Background(), database.UpdateCardParams{
+				FragranticaID: card.FragranticaID,
+				Image:         card.Image,
+				HasCard:       card.HasCard,
+			})
+			if err != nil {
+				db.Logger.Error("update card", "id", id, "error", err)
+				return err
+			}
+			db.Logger.Info("card updated", "id", id, "path", card.Image)
+		}
+	}
+	return nil
+}
+
+// Only use this for a fresh database because it will redownload all exisiting cards too.
+// Might be used to force update and find new cards that weren't there before.
+// Populates DB even with non existing fragrance cards.
+func DownloadAllCards(db *config.Database) error {
+	startCardID := int32(1)
+	// Set ID of last card from the database
+	endCardID, err := db.Queries.GetLastCardID(context.Background())
+	if err != nil {
+		return err
+	}
+
+	for id := startCardID; id <= endCardID; id++ {
+		// Try downloading the card (existing or not)
+		card, err := downloadCard(id)
+		// If card was found, but error still returned stop execution
+		if err != nil && card.HasCard {
+			db.Logger.Error("downloadCard", "error", err)
+			return err
+		}
+		// Check if card already exists
+		_, err = db.Queries.GetCard(context.Background(), id)
+		if err != nil {
+			// ID doesn't exist
+			if errors.Is(err, sql.ErrNoRows) {
+				// Add new card to the database
+				_, err = db.Queries.AddCard(context.Background(), card)
+				if err != nil {
+					db.Logger.Error("add card to database", "id", id, "error", err)
+					return err
+				}
+				db.Logger.Info("new card added", "id", id, "path", card.Image)
+			} else {
+				// Real error
+				db.Logger.Error("get card from database", "id", id, "error", err)
+				return err
+			}
+		} else {
+			// Update card if exists
+			_, err = db.Queries.UpdateCard(context.Background(), database.UpdateCardParams{
+				FragranticaID: card.FragranticaID,
+				Image:         card.Image,
+				HasCard:       card.HasCard,
+			})
+			if err != nil {
+				db.Logger.Error("update card", "id", id, "error", err)
+				return err
+			}
+		}
+	}
 
 	return nil
 }
@@ -265,78 +353,4 @@ func listDiff(a, b []int32) []int32 {
 	}
 
 	return result
-}
-
-// Redownloads a card (to be used as part of fragrance update)
-func RedownloadCard(db *config.Database, id int32) error {
-	card, err := downloadCard(id)
-	if card.HasCard {
-		// card found
-		if err != nil {
-			// but not downloaded -> return download error
-			return fmt.Errorf("Card download failed for ID %d: %w", id, err)
-		} else {
-			// card found & downloaded -> update DB
-			_, err = db.Queries.UpdateCard(context.Background(), database.UpdateCardParams{
-				FragranticaID: card.FragranticaID,
-				Image:         card.Image,
-				HasCard:       card.HasCard,
-			})
-			if err != nil {
-				return fmt.Errorf("Could not update card with ID %d: %w", id, err)
-			}
-			log.Printf("Card updated, ID:%d, URL:%s", id, card.Image)
-		}
-	}
-	return nil
-}
-
-// Only use this for a fresh database because it will redownload all exisiting cards too.
-// Might be used to force update and find new cards that weren't there before.
-// Populates DB even with non existing fragrance cards.
-func DownloadAllCards(db *config.Database) error {
-	startCardID := int32(1)
-	// Set ID of last card from the database
-	endCardID, err := db.Queries.GetLastCardID(context.Background())
-	if err != nil {
-		return err
-	}
-
-	for id := startCardID; id <= endCardID; id++ {
-		// Try downloading the card (existing or not)
-		card, err := downloadCard(id)
-		// If card was found, but error still returned stop execution
-		if err != nil && card.HasCard {
-			return fmt.Errorf("Card download failed for ID %d: %w", id, err)
-		}
-
-		// Check if card already exists
-		_, err = db.Queries.GetCard(context.Background(), id)
-		if err != nil {
-			// ID doesn't exist
-			if errors.Is(err, sql.ErrNoRows) {
-				// Add new card to the database
-				_, err = db.Queries.AddCard(context.Background(), card)
-				if err != nil {
-					return fmt.Errorf("Adding card to database failed for ID %d: %w", id, err)
-				}
-				log.Printf("New card added, ID:%d, URL:%s", id, card.Image)
-			} else {
-				// Real error
-				return fmt.Errorf("Could not get card from the database with ID %d: %w", id, err)
-			}
-		} else {
-			// Update card if exists
-			_, err = db.Queries.UpdateCard(context.Background(), database.UpdateCardParams{
-				FragranticaID: card.FragranticaID,
-				Image:         card.Image,
-				HasCard:       card.HasCard,
-			})
-			if err != nil {
-				return fmt.Errorf("Could not update card with ID %d: %w", id, err)
-			}
-		}
-	}
-
-	return nil
 }

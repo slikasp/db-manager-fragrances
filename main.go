@@ -20,7 +20,5 @@ func main() {
 		"env", db.BuildEnv,
 	)
 
-	// ManualDbUpdate(frags)
-
 	ScraperService(db, 30)
 }
