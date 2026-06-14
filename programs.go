@@ -11,7 +11,7 @@ import (
 func ScraperService(db *config.Database, numRequests int) {
 	c := cron.New()
 
-	schedule := "30 8-23 * * *"
+	schedule := "30 * * * *"
 
 	// only run these in the production environment where local card cache is located
 	if db.BuildEnv == "prod" {
@@ -30,6 +30,7 @@ func ScraperService(db *config.Database, numRequests int) {
 		// this will once every morning to look for new fragrances
 		c.AddFunc("0 7 * * *", func() {
 			// Go throug all IDs after the last found card and look for new cards
+			// TODO: keep increasing the number of cards to check when none are found
 			db.Logger.Info("looking for new cards")
 			cards.FindNewCards(db, 300)
 
@@ -43,7 +44,7 @@ func ScraperService(db *config.Database, numRequests int) {
 		db.Logger.Warn("APPLICATION RUNNING IN DEVELOPMENT MODE, SET 'BUILD_ENV=prod' IN .env FILE")
 	}
 
-	// this will run every waking hour every day and keep updating maxRequests*16 fragrance items every day
+	// this will run every waking hour every day and keep updating maxRequests number of fragrance items every day
 	c.AddFunc(schedule, func() {
 		// Go through new fragrances, find relevant data and update them
 		db.Logger.Info("adding missing details")
